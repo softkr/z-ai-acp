@@ -3,7 +3,8 @@
 import { Readable, Writable } from "node:stream";
 import { WritableStream, ReadableStream } from "node:stream/web";
 import { readFileSync } from "node:fs";
-import { platform } from "node:os";
+import { platform, homedir } from "node:os";
+import path from "node:path";
 import { Logger } from "./acp-agent.js";
 
 // Useful for bridging push-based and async-iterator-based code.
@@ -96,22 +97,39 @@ interface ManagedSettings {
     deny?: string[];
   };
   env?: Record<string, string>;
+  z_ai?: {
+    enabled?: boolean;
+    api_endpoint?: string;
+    model_mapping?: Record<string, string>;
+  };
 }
 
 // Following the rules in https://docs.anthropic.com/en/docs/claude-code/settings#settings-files
 // This can be removed once the SDK supports it natively.
 function getManagedSettingsPath(): string {
-  const os = platform();
-  switch (os) {
-    case "darwin":
-      return "/Library/Application Support/ClaudeCode/managed-settings.json";
-    case "linux": // including WSL
-      return "/etc/claude-code/managed-settings.json";
-    case "win32":
-      return "C:\\ProgramData\\ClaudeCode\\managed-settings.json";
-    default:
-      return "/etc/claude-code/managed-settings.json";
+  // Check for custom path in environment variable first
+  const customPath = process.env.CLAUDE_CODE_SETTINGS_PATH;
+  if (customPath) {
+    return customPath;
   }
+
+  // Default to ~/.config/z-ai-acp/
+  const homeDir = homedir();
+  const configDir = path.join(homeDir, ".config", "z-ai-acp");
+  return path.join(configDir, "managed-settings.json");
+
+  // Original system-wide paths (commented out)
+  // const os = platform();
+  // switch (os) {
+  //   case "darwin":
+  //     return "/Library/Application Support/ClaudeCode/managed-settings.json";
+  //   case "linux": // including WSL
+  //     return "/etc/claude-code/managed-settings.json";
+  //   case "win32":
+  //     return "C:\\ProgramData\\ClaudeCode\\managed-settings.json";
+  //   default:
+  //     return "/etc/claude-code/managed-settings.json";
+  // }
 }
 
 export function loadManagedSettings(): ManagedSettings | null {
@@ -126,6 +144,25 @@ export function applyEnvironmentSettings(settings: ManagedSettings): void {
   if (settings.env) {
     for (const [key, value] of Object.entries(settings.env)) {
       process.env[key] = value;
+    }
+  }
+
+  // Apply z_ai specific settings
+  if (settings.z_ai) {
+    const zAiConfig = settings.z_ai;
+
+    // Override env vars with z_ai config if enabled
+    if (zAiConfig.enabled) {
+      if (zAiConfig.api_endpoint) {
+        process.env.ANTHROPIC_BASE_URL = zAiConfig.api_endpoint;
+      }
+
+      // Set model mapping for reference
+      if (zAiConfig.model_mapping) {
+        process.env.Z_AI_MODEL_MAPPING_CONFIG = JSON.stringify(zAiConfig.model_mapping);
+      }
+
+      process.env.Z_AI_ENABLED = "true";
     }
   }
 }

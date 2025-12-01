@@ -1,13 +1,13 @@
 {
-  "name": "@zed-industries/claude-code-acp",
+  "name": "z-ai-acp",
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.10.10",
-  "description": "An ACP-compatible coding agent powered by the Claude Code SDK (TypeScript)",
+  "version": "0.11.0",
+  "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration (TypeScript)",
   "main": "dist/lib.js",
   "bin": {
-    "claude-code-acp": "./dist/index.js"
+    "z-ai-acp": "./dist/index.js"
   },
   "type": "module",
   "files": [
@@ -38,17 +38,20 @@
     "anthropic",
     "typescript",
     "sdk",
-    "code"
+    "code",
+    "z-ai",
+    "glm",
+    "integration"
   ],
-  "homepage": "https://github.com/zed-industries/claude-code-acp#readme",
+  "homepage": "https://github.com/z-ai/z-ai-acp#readme",
   "bugs": {
-    "url": "https://github.com/zed-industries/claude-code-acp/issues"
+    "url": "https://github.com/z-ai/z-ai-acp/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zed-industries/claude-code-acp.git"
+    "url": "git+https://github.com/z-ai/z-ai-acp.git"
   },
-  "author": "Zed Industries",
+  "author": "Z.AI",
   "license": "Apache-2.0",
   "dependencies": {
     "@agentclientprotocol/sdk": "0.7.0",
