@@ -44,12 +44,14 @@ git push && git push --tags
 
 ### 3. Update extension.toml
 
-After creating a release, update `extension.toml` if needed:
+**IMPORTANT:** After creating a release, you MUST update `extension.toml` with the actual version number in all archive URLs. Zed does NOT support `{version}` placeholders for agent servers.
 
 ```toml
-# The {version} placeholder will be automatically replaced by Zed
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v{version}/z-ai-acp-darwin-aarch64.tar.gz"
+# Update all archive URLs with the actual version number
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.11.2/z-ai-acp-darwin-aarch64.tar.gz"
 ```
+
+You need to update all 4 platform archive URLs (darwin-aarch64, darwin-x86_64, linux-x86_64, windows-x86_64).
 
 ## Testing Locally
 
