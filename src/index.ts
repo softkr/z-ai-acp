@@ -22,8 +22,15 @@ process.on("unhandledRejection", (reason, promise) => {
 
 // Wrap top-level await in async IIFE for CommonJS compatibility
 (async () => {
-  // Ensure API key is configured before starting
-  await ensureApiKey();
+  // In ACP mode (Zed extension), skip interactive prompts
+  // API key will be checked when creating a new session
+  // If missing, ACP will return authRequired error to the client
+  const isAcpMode = process.argv.includes("--acp");
+
+  if (!isAcpMode) {
+    // Only prompt for API key in interactive/standalone mode
+    await ensureApiKey();
+  }
 
   runAcp();
 

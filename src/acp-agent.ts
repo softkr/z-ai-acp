@@ -149,11 +149,11 @@ export class ClaudeAcpAgent implements Agent {
   async initialize(request: InitializeRequest): Promise<InitializeResponse> {
     this.clientCapabilities = request.clientCapabilities;
 
-    // Default authMethod
+    // Z.AI API Key authentication method
     const authMethod: any = {
-      description: "Run `claude /login` in the terminal",
-      name: "Log in with Claude Code",
-      id: "claude-login",
+      description: "Configure ANTHROPIC_AUTH_TOKEN in Zed settings (agent_servers > Z AI Agent > env)",
+      name: "Configure Z.AI API Key",
+      id: "z-ai-api-key",
     };
 
     // If client supports terminal-auth capability, use that instead.
@@ -190,6 +190,11 @@ export class ClaudeAcpAgent implements Agent {
     };
   }
   async newSession(params: NewSessionRequest): Promise<NewSessionResponse> {
+    // Check if API key is configured
+    if (!process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_AUTH_TOKEN.trim() === "") {
+      throw RequestError.authRequired();
+    }
+
     if (
       fs.existsSync(path.resolve(os.homedir(), ".claude.json.backup")) &&
       !fs.existsSync(path.resolve(os.homedir(), ".claude.json"))
