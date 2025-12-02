@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Load managed settings and apply environment variables
-import { loadManagedSettings, applyEnvironmentSettings } from "./utils.js";
+import { loadManagedSettings, applyEnvironmentSettings, ensureApiKey } from "./utils.js";
 
 const managedSettings = loadManagedSettings();
 if (managedSettings) {
@@ -18,6 +18,9 @@ console.debug = console.error;
 process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
+
+// Ensure API key is configured before starting
+await ensureApiKey();
 
 import { runAcp } from "./acp-agent.js";
 runAcp();

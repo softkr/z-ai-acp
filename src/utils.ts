@@ -2,9 +2,17 @@
 
 import { Readable, Writable } from "node:stream";
 import { WritableStream, ReadableStream } from "node:stream/web";
-import { readFileSync } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  existsSync,
+  createReadStream,
+  createWriteStream,
+} from "node:fs";
 import { platform, homedir } from "node:os";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { Logger } from "./acp-agent.js";
 
 // Useful for bridging push-based and async-iterator-based code.
@@ -229,4 +237,117 @@ export function extractLinesWithByteLimit(
     wasLimited,
     linesRead: linesSeen,
   };
+}
+
+/**
+ * Prompts user for API key via terminal input
+ * Uses /dev/tty to avoid interfering with stdio-based ACP protocol
+ */
+async function promptForApiKey(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    try {
+      // Use /dev/tty for direct terminal access to avoid ACP protocol interference
+      const input = createReadStream("/dev/tty");
+      const output = createWriteStream("/dev/tty");
+
+      const rl = createInterface({
+        input,
+        output,
+      });
+
+      console.error("\n=== Z.AI ACP 초기 설정 ===");
+      console.error("API 키가 설정되지 않았습니다.");
+      console.error("\nZ.AI API 키를 입력하세요:\n");
+
+      rl.question("API Key: ", (answer) => {
+        rl.close();
+        input.destroy();
+        output.end();
+
+        const apiKey = answer.trim();
+        if (!apiKey) {
+          reject(new Error("API 키가 입력되지 않았습니다."));
+        } else {
+          resolve(apiKey);
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Saves API key to managed settings file
+ */
+function saveApiKeyToSettings(apiKey: string): void {
+  const settingsPath = getManagedSettingsPath();
+  const settingsDir = path.dirname(settingsPath);
+
+  // Create config directory if it doesn't exist
+  if (!existsSync(settingsDir)) {
+    mkdirSync(settingsDir, { recursive: true });
+  }
+
+  // Load existing settings or create default
+  let settings: ManagedSettings;
+  try {
+    settings = JSON.parse(readFileSync(settingsPath, "utf8")) as ManagedSettings;
+  } catch {
+    // If file doesn't exist or is invalid, create default settings
+    settings = {
+      permissions: {
+        allow: ["*"],
+        deny: [],
+      },
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.z.ai/api/anthropic",
+        API_TIMEOUT_MS: "3000000",
+        Z_AI_MODEL_MAPPING: "true",
+      },
+      z_ai: {
+        enabled: true,
+        api_endpoint: "https://api.z.ai/api/anthropic",
+        model_mapping: {
+          "claude-3-5-sonnet-20241022": "glm-4.6",
+          "claude-3-5-haiku-20241022": "glm-4.5-air",
+          "claude-3-opus-20240229": "glm-4.6",
+        },
+      },
+    };
+  }
+
+  // Update API key
+  if (!settings.env) {
+    settings.env = {};
+  }
+  settings.env.ANTHROPIC_AUTH_TOKEN = apiKey;
+
+  // Save to file
+  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf8");
+  console.error(`\n✓ API 키가 저장되었습니다: ${settingsPath}\n`);
+}
+
+/**
+ * Checks if API key is configured, prompts user if not
+ */
+export async function ensureApiKey(): Promise<void> {
+  const apiKey = process.env.ANTHROPIC_AUTH_TOKEN;
+
+  if (!apiKey || apiKey.trim() === "") {
+    try {
+      const newApiKey = await promptForApiKey();
+      saveApiKeyToSettings(newApiKey);
+      process.env.ANTHROPIC_AUTH_TOKEN = newApiKey;
+    } catch (error) {
+      console.error("\n에러:", error instanceof Error ? error.message : String(error));
+      console.error("\nAPI 키 설정을 위해 다음 방법 중 하나를 선택하세요:");
+      console.error("1. 환경 변수 설정: export ANTHROPIC_AUTH_TOKEN=your-api-key");
+      console.error(
+        `2. 설정 파일 편집: ${getManagedSettingsPath()}`,
+      );
+      console.error("   (env.ANTHROPIC_AUTH_TOKEN 필드에 API 키 입력)\n");
+      process.exit(1);
+    }
+  }
 }
