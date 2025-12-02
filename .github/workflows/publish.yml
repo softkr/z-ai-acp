@@ -37,16 +37,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
-      - name: Setup Node.js
+      - name: Setup Node.js 18 for pkg
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: "20"
+          node-version: "18"
           cache: "yarn"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Build binaries
+      - name: Build binaries with pkg
         run: yarn build:binaries
 
       - name: Prepare binary for packaging
