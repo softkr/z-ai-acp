@@ -40,14 +40,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: "18"
-          cache: "npm"
+          node-version: "20"
+          cache: "yarn"
 
       - name: Install dependencies
-        run: npm ci
+        run: yarn install --frozen-lockfile
 
       - name: Build binaries
-        run: npm run build:binaries
+        run: yarn build:binaries
 
       - name: Prepare binary for packaging
         shell: bash
