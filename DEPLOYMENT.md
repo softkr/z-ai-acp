@@ -34,7 +34,7 @@ npm version patch  # or minor, major
 git push && git push --tags
 
 # 3. Create a GitHub release
-# Go to: https://github.com/z-ai/z-ai-acp/releases/new
+# Go to: https://github.com/softkr/z-ai-acp/releases/new
 # - Select the new tag
 # - Fill in release notes
 # - Click "Publish release"
@@ -48,7 +48,7 @@ After creating a release, update `extension.toml` if needed:
 
 ```toml
 # The {version} placeholder will be automatically replaced by Zed
-archive = "https://github.com/z-ai/z-ai-acp/releases/download/v{version}/z-ai-acp-darwin-aarch64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v{version}/z-ai-acp-darwin-aarch64.tar.gz"
 ```
 
 ## Testing Locally

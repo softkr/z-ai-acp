@@ -45,13 +45,13 @@
     "glm",
     "integration"
   ],
-  "homepage": "https://github.com/z-ai/z-ai-acp#readme",
+  "homepage": "https://github.com/softkr/z-ai-acp#readme",
   "bugs": {
-    "url": "https://github.com/z-ai/z-ai-acp/issues"
+    "url": "https://github.com/softkr/z-ai-acp/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/z-ai/z-ai-acp.git"
+    "url": "git+https://github.com/softkr/z-ai-acp.git"
   },
   "author": "Z.AI",
   "license": "Apache-2.0",
