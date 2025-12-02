@@ -2,6 +2,7 @@
 
 // Load managed settings and apply environment variables
 import { loadManagedSettings, applyEnvironmentSettings, ensureApiKey } from "./utils.js";
+import { runAcp } from "./acp-agent.js";
 
 const managedSettings = loadManagedSettings();
 if (managedSettings) {
@@ -19,11 +20,16 @@ process.on("unhandledRejection", (reason, promise) => {
   console.error("Unhandled Rejection at:", promise, "reason:", reason);
 });
 
-// Ensure API key is configured before starting
-await ensureApiKey();
+// Wrap top-level await in async IIFE for CommonJS compatibility
+(async () => {
+  // Ensure API key is configured before starting
+  await ensureApiKey();
 
-import { runAcp } from "./acp-agent.js";
-runAcp();
+  runAcp();
 
-// Keep process alive
-process.stdin.resume();
+  // Keep process alive
+  process.stdin.resume();
+})().catch((error) => {
+  console.error("Fatal error during startup:", error);
+  process.exit(1);
+});

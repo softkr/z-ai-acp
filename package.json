@@ -18,6 +18,8 @@
   ],
   "scripts": {
     "build": "tsc",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/bundle.cjs --packages=bundle",
+    "build:binaries": "yarn bundle && pkg dist/bundle.cjs --compress Brotli --targets node18-macos-arm64,node18-macos-x64,node18-linux-x64,node18-win-x64 --output bin/z-ai-acp",
     "start": "node dist/index.js",
     "dev": "npm run build && npm run start",
     "lint": "eslint src --ext .ts",
@@ -67,12 +69,15 @@
     "@types/uuid": "10.0.0",
     "@typescript-eslint/eslint-plugin": "8.48.0",
     "@typescript-eslint/parser": "8.48.0",
+    "esbuild": "^0.27.0",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "globals": "16.5.0",
+    "pkg": "^5.8.1",
     "prettier": "3.7.3",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "vitest": "4.0.14"
-  }
+  },
+  "pkg": {}
 }
