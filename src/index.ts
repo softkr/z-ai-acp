@@ -22,6 +22,13 @@ process.on("unhandledRejection", (reason, promise) => {
 
 // Wrap top-level await in async IIFE for CommonJS compatibility
 (async () => {
+  // Check for --setup flag
+  if (process.argv.includes("--setup")) {
+    await ensureApiKey();
+    console.log("✓ 설정이 완료되었습니다. 이제 Zed에서 Z AI Agent를 사용할 수 있습니다.");
+    process.exit(0);
+  }
+
   // In ACP mode (Zed extension), skip interactive prompts
   // API key will be checked when creating a new session
   // If missing, ACP will return authRequired error to the client

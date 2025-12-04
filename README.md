@@ -1,10 +1,10 @@
-# ACP adapter for Claude Code
+# Z.AI ACP Agent
 
-[![npm](https://img.shields.io/npm/v/%40zed-industries%2Fclaude-code-acp)](https://www.npmjs.com/package/@zed-industries/claude-code-acp)
+[![npm](https://img.shields.io/npm/v/z-ai-acp)](https://www.npmjs.com/package/z-ai-acp)
 
-Use [Claude Code](https://www.anthropic.com/claude-code) from [ACP-compatible](https://agentclientprotocol.com) clients such as [Zed](https://zed.dev)!
+Use [Z.AI](https://z.ai) powered coding agent from [ACP-compatible](https://agentclientprotocol.com) clients such as [Zed](https://zed.dev)!
 
-This tool implements an ACP agent by using the official [Claude Code SDK](https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-overview), supporting:
+This tool implements an ACP agent by using the official [Claude Code SDK](https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-overview) with Z.AI integration, supporting:
 
 - Context @-mentions
 - Images
@@ -15,22 +15,71 @@ This tool implements an ACP agent by using the official [Claude Code SDK](https:
 - Interactive (and background) terminals
 - Custom [Slash commands](https://docs.anthropic.com/en/docs/claude-code/slash-commands)
 - Client MCP servers
+- Z.AI model integration (GLM models)
 
 Learn more about the [Agent Client Protocol](https://agentclientprotocol.com/).
 
+## Installation & Setup
+
+### Quick Setup with Zed Extension
+
+1. **Install the Zed extension** from the extensions panel
+2. **Configure your API key** after installation:
+
+```bash
+# After installing the extension, run this command in your terminal
+z-ai-acp --setup
+```
+
+This will prompt you for your Z.AI API key and automatically configure it.
+
+### Manual API Key Configuration
+
+If you prefer to configure manually, you can set the API key via:
+
+**Environment Variable:**
+```bash
+export ANTHROPIC_AUTH_TOKEN=your-z-ai-api-key
+```
+
+**Or in Zed Settings:**
+```json
+{
+  "agent_servers": {
+    "Z AI Agent": {
+      "env": {
+        "ANTHROPIC_AUTH_TOKEN": "your-z-ai-api-key"
+      }
+    }
+  }
+}
+```
+
 ## How to use
 
-### Zed
+### Zed Editor
 
-The latest version of Zed can already use this adapter out of the box.
+After installing the extension and configuring your API key:
 
-To use Claude Code, open the Agent Panel and click "New Claude Code Thread" from the `+` button menu in the top-right:
+1. Open the Agent Panel (**Cmd/Ctrl + Shift + A**)
+2. Click "New Claude Code Thread" from the `+` button menu
+3. Start chatting with the Z.AI agent!
 
-https://github.com/user-attachments/assets/ddce66c7-79ac-47a3-ad59-4a6a3ca74903
+![Zed Agent Panel](https://github.com/user-attachments/assets/ddce66c7-79ac-47a3-ad59-4a6a3ca74903)
 
-Read the docs on [External Agent](https://zed.dev/docs/ai/external-agents) support.
+### Standalone Usage
 
-### Other clients
+You can also use the agent directly from the command line:
+
+```bash
+# Interactive mode (will prompt for API key if not configured)
+z-ai-acp
+
+# ACP mode for integration with other tools
+z-ai-acp --acp
+```
+
+### Other ACP-Compatible Clients
 
 - Emacs via [agent-shell.el](https://github.com/xenodium/agent-shell)
 - [marimo notebook](https://github.com/marimo-team/marimo)
@@ -38,20 +87,62 @@ Read the docs on [External Agent](https://zed.dev/docs/ai/external-agents) suppo
   - via [CodeCompanion.nvim](https://codecompanion.olimorris.dev/configuration/adapters#setup-claude-code-via-acp)
   - via [yetone/avante.nvim](https://github.com/yetone/avante.nvim)
 
-[Submit a PR](https://github.com/zed-industries/claude-code-acp/pulls) to add yours!
+[Submit a PR](https://github.com/softkr/z-ai-acp/pulls) to add yours!
 
-#### Installation
+## Features
 
-Install the adapter from `npm`:
+### Z.AI Integration
+- **GLM Models**: Automatically uses Z.AI's GLM models (GLM-4.6, GLM-4.5-air)
+- **Korean Optimization**: Enhanced support for Korean language and context
+- **Cost Effective**: More affordable than standard Claude API
+
+### Permission Modes
+- **Always Ask**: Prompts for permission on first use of each tool
+- **Accept Edits**: Automatically accepts file edit permissions
+- **Plan Mode**: Analyze without modifying files or executing commands
+- **Bypass Permissions**: Skip all permission prompts (non-root only)
+
+### Configuration
+
+The agent stores configuration in `~/.config/z-ai-acp/managed-settings.json` with these defaults:
+
+```json
+{
+  "permissions": {
+    "allow": ["*"],
+    "deny": []
+  },
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "Z_AI_MODEL_MAPPING": "true"
+  },
+  "z_ai": {
+    "enabled": true,
+    "api_endpoint": "https://api.z.ai/api/anthropic",
+    "model_mapping": {
+      "claude-3-5-sonnet-20241022": "glm-4.6",
+      "claude-3-5-haiku-20241022": "glm-4.5-air",
+      "claude-3-opus-20240229": "glm-4.6"
+    }
+  }
+}
+```
+
+## Development
 
 ```bash
-npm install @zed-industries/claude-code-acp
-```
+# Install dependencies
+npm install
 
-You can then use `claude-code-acp` as a regular ACP agent:
+# Build the project
+npm run build
 
-```
-ANTHROPIC_API_KEY=sk-... claude-code-acp
+# Run tests
+npm test
+
+# Create binaries for distribution
+npm run build:binaries
 ```
 
 ## License
