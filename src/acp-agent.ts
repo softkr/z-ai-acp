@@ -543,69 +543,25 @@ export class ClaudeAcpAgent implements Agent {
     const session = this.sessions[params.sessionId];
     session.cancelled = false;
 
-    // Handle Auth Required State - ask for API key in chat
+    // Handle Auth Required State - guide user to run terminal setup
     if (session.isAuthRequired) {
-      const userInput = params.prompt
-        .map(p => p.type === "text" ? p.text : "")
-        .join("")
-        .trim();
-
-      if (userInput && userInput.length > 10) {
-        // Validate the API key
-        this.logger.log("Validating API key from chat input...");
-        const validation = await validateApiKey(userInput);
-
-        if (!validation.isValid) {
-          await this.client.sessionUpdate({
-            sessionId: params.sessionId,
-            update: {
-              sessionUpdate: "agent_message_chunk",
-              content: {
-                type: "text",
-                text: "❌ API 키가 유효하지 않습니다.\n\n" +
-                  (validation.error || "") + "\n\n" +
-                  "올바른 API 키를 다시 입력해주세요.\n" +
-                  "🔑 API 키 발급: https://z.ai"
-              }
-            }
-          });
-          return { stopReason: "end_turn" };
+      await this.client.sessionUpdate({
+        sessionId: params.sessionId,
+        update: {
+          sessionUpdate: "agent_message_chunk",
+          content: {
+            type: "text",
+            text: "🔑 **Z.AI API 키 설정이 필요합니다**\n\n" +
+              "터미널에서 다음 명령어를 실행해주세요:\n\n" +
+              "```bash\nz-ai-acp --setup\n```\n\n" +
+              "또는 Zed 터미널 (Ctrl+`)에서 실행 후,\n" +
+              "**새로운 세션**을 시작해주세요. (Cmd/Ctrl + N)\n\n" +
+              "🔗 API 키 발급: https://z.ai"
+          }
         }
+      });
 
-        // Save valid API key
-        saveApiKey(userInput);
-        process.env.ANTHROPIC_AUTH_TOKEN = userInput;
-        session.isAuthRequired = false;
-
-        await this.client.sessionUpdate({
-          sessionId: params.sessionId,
-          update: {
-            sessionUpdate: "agent_message_chunk",
-            content: {
-              type: "text",
-              text: "✅ API 키가 저장되었습니다!\n\n" +
-                "새로운 세션을 시작해주세요.\n" +
-                "(Cmd/Ctrl + N 또는 새 채팅 시작)"
-            }
-          }
-        });
-        return { stopReason: "end_turn" };
-      } else {
-        // Ask for API key
-        await this.client.sessionUpdate({
-          sessionId: params.sessionId,
-          update: {
-            sessionUpdate: "agent_message_chunk",
-            content: {
-              type: "text",
-              text: "🔑 **Z.AI API 키가 필요합니다**\n\n" +
-                "API 키를 이 채팅창에 입력해주세요.\n\n" +
-                "API 키 발급: https://z.ai"
-            }
-          }
-        });
-        return { stopReason: "end_turn" };
-      }
+      return { stopReason: "end_turn" };
     }
 
     // If query is null (shouldn't happen after auth), ask to restart
