@@ -1,6 +1,6 @@
 id = "z-ai-agent"
 name = "z-ai-agent"
-version = "0.0.1"
+version = "0.0.2"
 schema_version = 1
 authors = ["Z.AI"]
 description = "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration"
@@ -18,28 +18,28 @@ env = {}
 
 # macOS ARM64 (Apple Silicon)
 [agent_servers.z-ai.targets.darwin-aarch64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.1/z-ai-acp-darwin-aarch64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-darwin-aarch64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
-sha256 = "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+sha256 = "abe9906912183856bb3a40e9ee5d7ae4718e5f19e985ae3393df7fbd841453df"
 
 # macOS x86_64 (Intel)
 [agent_servers.z-ai.targets.darwin-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.1/z-ai-acp-darwin-x86_64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-darwin-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
-sha256 = "f3261714637d52e662d0546a3a2f05c89e73d11980021e3dcb4994b0794b4060"
+sha256 = "477a7563f37d40c0902eb67cab47b722089410498f89536ab93132b28775cf45"
 
 # Linux x86_64
 [agent_servers.z-ai.targets.linux-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.1/z-ai-acp-linux-x86_64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-linux-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
-sha256 = "c5d63746062602880f14472ab6f583b24704156ccb5c7b1c3efdc298b5f2b854"
+sha256 = "0dcf07e962c46275d49317a06c3dbb6ab7d6464f912f413d67710ab9e149fcf6"
 
 # Windows x86_64
 [agent_servers.z-ai.targets.windows-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.1/z-ai-acp-windows-x86_64.zip"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-windows-x86_64.zip"
 cmd = "./z-ai-acp.exe"
 args = ["--acp"]
-sha256 = "84d73a2504f8bd02eacd5f96c2ac2981501ce4b989e766cb7beebfd432ca9d62"
+sha256 = "8beff1916887e43bc11cc3f58b11c60f37d73752b0e69b58e35b4d392433e271"

@@ -40,7 +40,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { v7 as uuidv7 } from "uuid";
-import { nodeToWebReadable, nodeToWebWritable, Pushable, unreachable } from "./utils.js";
+import { nodeToWebReadable, nodeToWebWritable, Pushable, unreachable, saveApiKey } from "./utils.js";
 import { createMcpServer, EDIT_TOOL_NAMES, toolNames } from "./mcp-server.js";
 import {
   toolInfoFromToolUse,
@@ -411,8 +411,23 @@ export class ClaudeAcpAgent implements Agent {
     };
   }
 
-  async authenticate(_params: AuthenticateRequest): Promise<void> {
-    throw new Error("Method not implemented.");
+  async authenticate(params: AuthenticateRequest): Promise<void> {
+    // Check if API key is provided in _meta
+    const apiKey = (params._meta as any)?.apiKey;
+
+    if (apiKey && typeof apiKey === "string" && apiKey.trim() !== "") {
+      // Save API key to settings and set environment variable
+      saveApiKey(apiKey.trim());
+      process.env.ANTHROPIC_AUTH_TOKEN = apiKey.trim();
+      this.logger.log("API key configured successfully");
+      return;
+    }
+
+    // If no API key provided, throw error with instructions
+    throw new Error(
+      "API key not provided. Please configure ANTHROPIC_AUTH_TOKEN in Zed settings:\n" +
+      "Settings > Extensions > Z AI Agent > env > ANTHROPIC_AUTH_TOKEN"
+    );
   }
 
   async prompt(params: PromptRequest): Promise<PromptResponse> {

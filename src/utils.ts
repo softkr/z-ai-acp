@@ -280,7 +280,7 @@ async function promptForApiKey(): Promise<string> {
 /**
  * Saves API key to managed settings file
  */
-function saveApiKeyToSettings(apiKey: string): void {
+export function saveApiKey(apiKey: string): void {
   const settingsPath = getManagedSettingsPath();
   const settingsDir = path.dirname(settingsPath);
 
@@ -337,7 +337,7 @@ export async function ensureApiKey(): Promise<void> {
   if (!apiKey || apiKey.trim() === "") {
     try {
       const newApiKey = await promptForApiKey();
-      saveApiKeyToSettings(newApiKey);
+      saveApiKey(newApiKey);
       process.env.ANTHROPIC_AUTH_TOKEN = newApiKey;
     } catch (error) {
       console.error("\n에러:", error instanceof Error ? error.message : String(error));
