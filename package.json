@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/bundle.cjs --packages=bundle",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/bundle.cjs --packages=bundle --external:@anthropic-ai/claude-agent-sdk --external:@anthropic-ai/claude-code",
     "build:binaries": "yarn bundle && pkg dist/bundle.cjs --no-bytecode --public --targets node18-macos-arm64,node18-macos-x64,node18-linux-x64,node18-win-x64 --output bin/z-ai-acp",
     "start": "node dist/index.js",
     "dev": "npm run build && npm run start",
@@ -79,5 +79,10 @@
     "typescript": "5.9.3",
     "vitest": "4.0.14"
   },
-  "pkg": {}
+  "pkg": {
+    "assets": [
+      "node_modules/@anthropic-ai/claude-agent-sdk/**/*",
+      "node_modules/@anthropic-ai/claude-code/**/*"
+    ]
+  }
 }

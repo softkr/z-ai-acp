@@ -53,6 +53,7 @@ import {
 import { ContentBlockParam } from "@anthropic-ai/sdk/resources";
 import { BetaContentBlock, BetaRawContentBlockDelta } from "@anthropic-ai/sdk/resources/beta.mjs";
 import packageJson from "../package.json" with { type: "json" };
+import { execSync } from "node:child_process";
 
 /**
  * Logger interface for customizing logging output
@@ -126,6 +127,35 @@ type ToolUseCache = {
 // Bypass Permissions doesn't work if we are a root/sudo user
 const IS_ROOT = (process.geteuid?.() ?? process.getuid?.()) === 0;
 
+// Find the system node executable
+function findNodeExecutable(): string {
+  try {
+    // Try to use 'which node' to find node in PATH
+    const nodePath = execSync("which node", { encoding: "utf8" }).trim();
+    if (nodePath) return nodePath;
+  } catch {
+    // If which fails, try common locations
+  }
+
+  // Try common node locations
+  const commonPaths = [
+    "/usr/local/bin/node",
+    "/usr/bin/node",
+    "/opt/homebrew/bin/node", // macOS M1
+    process.execPath, // fallback to current executable
+  ];
+
+  for (const p of commonPaths) {
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch {
+      continue;
+    }
+  }
+
+  return process.execPath; // final fallback
+}
+
 // Implement the ACP Agent interface
 export class ClaudeAcpAgent implements Agent {
   sessions: {
@@ -163,6 +193,8 @@ export class ClaudeAcpAgent implements Agent {
       },
     };
 
+    this.logger.log("Returning authMethod:", JSON.stringify(authMethod));
+
     // If client supports terminal-auth capability, use that instead.
     // if (request.clientCapabilities?._meta?.["terminal-auth"] === true) {
     //   const cliPath = fileURLToPath(import.meta.resolve("@anthropic-ai/claude-agent-sdk/cli.js"));
@@ -197,6 +229,12 @@ export class ClaudeAcpAgent implements Agent {
     };
   }
   async newSession(params: NewSessionRequest): Promise<NewSessionResponse> {
+    this.logger.log("newSession called with params:", JSON.stringify({
+      cwd: params.cwd,
+      hasMcpServers: !!params.mcpServers,
+      hasMeta: !!params._meta,
+    }));
+
     // Check if API key is configured
     if (!process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_AUTH_TOKEN.trim() === "") {
       throw RequestError.authRequired();
@@ -271,7 +309,7 @@ export class ClaudeAcpAgent implements Agent {
       stderr: (err) => this.logger.error(err),
       ...userProvidedOptions,
       // Override certain fields that must be controlled by ACP
-      cwd: params.cwd,
+      cwd: params.cwd || process.cwd(),
       includePartialMessages: true,
       mcpServers: { ...(userProvidedOptions?.mcpServers || {}), ...mcpServers },
       // If we want bypassPermissions to be an option, we have to allow it here.
@@ -279,9 +317,8 @@ export class ClaudeAcpAgent implements Agent {
       allowDangerouslySkipPermissions: !IS_ROOT,
       permissionMode,
       canUseTool: this.canUseTool(sessionId),
-      // note: although not documented by the types, passing an absolute path
-      // here works to find zed's managed node version.
-      executable: process.execPath as any,
+      // Use system node instead of bundled executable to avoid pkg issues
+      executable: findNodeExecutable() as any,
       ...(process.env.CLAUDE_CODE_EXECUTABLE && {
         pathToClaudeCodeExecutable: process.env.CLAUDE_CODE_EXECUTABLE,
       }),
@@ -356,10 +393,18 @@ export class ClaudeAcpAgent implements Agent {
       throw new Error("Cancelled");
     }
 
-    const q = query({
-      prompt: input,
-      options,
-    });
+    this.logger.log("Creating query with cwd:", options.cwd);
+
+    let q;
+    try {
+      q = query({
+        prompt: input,
+        options,
+      });
+    } catch (error) {
+      this.logger.error("Error creating query:", error);
+      throw error;
+    }
 
     this.sessions[sessionId] = {
       query: q,
@@ -444,10 +489,19 @@ export class ClaudeAcpAgent implements Agent {
 
     // If no API key provided, throw error with instructions
     throw new Error(
-      "API key not provided. Please enter your Z.AI API key when prompted.\n\n" +
-      "Alternatively, configure ANTHROPIC_AUTH_TOKEN in Zed settings:\n" +
-      "Settings > Extensions > Z AI Agent > env > ANTHROPIC_AUTH_TOKEN\n\n" +
-      "Get your API key from: https://z.ai"
+      "⚠️ Z.AI API Key Required\n\n" +
+      "Please click the 'Configure Z.AI API Key' button above to enter your API key.\n\n" +
+      "Or manually add to Zed settings.json:\n" +
+      '{\n' +
+      '  "agent_servers": {\n' +
+      '    "Z AI Agent": {\n' +
+      '      "env": {\n' +
+      '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
+      '      }\n' +
+      '    }\n' +
+      '  }\n' +
+      "}\n\n" +
+      "🔑 Get your API key from: https://z.ai"
     );
   }
 

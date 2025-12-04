@@ -3,3 +3,6 @@ dist
 bin
 .DS_Store
 .claude
+dist-pkg
+*.tar.gz
+*.zip
