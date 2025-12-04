@@ -14,24 +14,24 @@ env = {}
 
 # macOS ARM64 (Apple Silicon)
 [agent_servers.zAI.targets.darwin-aarch64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.16/z-ai-acp-darwin-aarch64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.17/z-ai-acp-darwin-aarch64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
 
 # macOS x86_64 (Intel)
 [agent_servers.zAI.targets.darwin-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.16/z-ai-acp-darwin-x86_64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.17/z-ai-acp-darwin-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
 
 # Linux x86_64
 [agent_servers.zAI.targets.linux-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.16/z-ai-acp-linux-x86_64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.17/z-ai-acp-linux-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
 
 # Windows x86_64
 [agent_servers.zAI.targets.windows-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.16/z-ai-acp-windows-x86_64.zip"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.17/z-ai-acp-windows-x86_64.zip"
 cmd = "./z-ai-acp.exe"
 args = ["--acp"]
