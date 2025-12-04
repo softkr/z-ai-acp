@@ -21,25 +21,21 @@ env = {}
 archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-darwin-aarch64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
-sha256 = "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
 
 # macOS x86_64 (Intel)
 [agent_servers.z-ai.targets.darwin-x86_64]
 archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-darwin-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
-sha256 = "477a7563f37d40c0902eb67cab47b722089410498f89536ab93132b28775cf45"
 
 # Linux x86_64
 [agent_servers.z-ai.targets.linux-x86_64]
 archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-linux-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
-sha256 = "0dcf07e962c46275d49317a06c3dbb6ab7d6464f912f413d67710ab9e149fcf6"
 
 # Windows x86_64
 [agent_servers.z-ai.targets.windows-x86_64]
 archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.2/z-ai-acp-windows-x86_64.zip"
 cmd = "./z-ai-acp.exe"
 args = ["--acp"]
-sha256 = "8beff1916887e43bc11cc3f58b11c60f37d73752b0e69b58e35b4d392433e271"
