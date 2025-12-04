@@ -543,25 +543,65 @@ export class ClaudeAcpAgent implements Agent {
     const session = this.sessions[params.sessionId];
     session.cancelled = false;
 
-    // Handle Auth Required State - guide user to run terminal setup
+    // Handle Auth Required State - run terminal setup automatically
     if (session.isAuthRequired) {
-      await this.client.sessionUpdate({
-        sessionId: params.sessionId,
-        update: {
-          sessionUpdate: "agent_message_chunk",
-          content: {
-            type: "text",
-            text: "🔑 **Z.AI API 키 설정이 필요합니다**\n\n" +
-              "터미널에서 다음 명령어를 실행해주세요:\n\n" +
-              "```bash\nz-ai-acp --setup\n```\n\n" +
-              "또는 Zed 터미널 (Ctrl+`)에서 실행 후,\n" +
-              "**새로운 세션**을 시작해주세요. (Cmd/Ctrl + N)\n\n" +
-              "🔗 API 키 발급: https://z.ai"
+      // Check if terminal capability is available
+      if (this.clientCapabilities?.terminal && this.client.createTerminal) {
+        // Show message first
+        await this.client.sessionUpdate({
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: {
+              type: "text",
+              text: "🔑 **Z.AI API 키 설정**\n\n터미널에서 API 키를 입력해주세요:\n\n🔗 API 키 발급: https://z.ai"
+            }
           }
-        }
-      });
+        });
 
-      return { stopReason: "end_turn" };
+        // Create terminal and run setup script
+        const handle = await this.client.createTerminal({
+          command: "curl -fsSL https://raw.githubusercontent.com/softkr/z-ai-acp/main/setup-api-key.sh | bash",
+          env: [],
+          sessionId: params.sessionId,
+          outputByteLimit: 32_000,
+        });
+
+        // Wait for terminal to complete
+        await handle.waitForExit();
+
+        // Ask to restart session
+        await this.client.sessionUpdate({
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: {
+              type: "text",
+              text: "\n\n✅ 설정 완료! **새로운 세션**을 시작해주세요. (Cmd/Ctrl + N)"
+            }
+          }
+        });
+
+        return { stopReason: "end_turn" };
+      } else {
+        // Fallback to text message if terminal not available
+        await this.client.sessionUpdate({
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: {
+              type: "text",
+              text: "🔑 **Z.AI API 키 설정이 필요합니다**\n\n" +
+                "터미널에서 다음 명령어를 실행해주세요:\n\n" +
+                "```bash\ncurl -fsSL https://raw.githubusercontent.com/softkr/z-ai-acp/main/setup-api-key.sh | bash\n```\n\n" +
+                "실행 후 **새로운 세션**을 시작해주세요. (Cmd/Ctrl + N)\n\n" +
+                "🔗 API 키 발급: https://z.ai"
+            }
+          }
+        });
+
+        return { stopReason: "end_turn" };
+      }
     }
 
     // If query is null (shouldn't happen after auth), ask to restart
