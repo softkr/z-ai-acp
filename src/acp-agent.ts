@@ -425,8 +425,19 @@ export class ClaudeAcpAgent implements Agent {
 
     // If no API key provided, throw error with instructions
     throw new Error(
-      "API key not provided. Please configure ANTHROPIC_AUTH_TOKEN in Zed settings:\n" +
-      "Settings > Extensions > Z AI Agent > env > ANTHROPIC_AUTH_TOKEN"
+      "API key not provided. Please configure ANTHROPIC_AUTH_TOKEN in Zed settings:\n\n" +
+      "Settings > Extensions > Z AI Agent > env > ANTHROPIC_AUTH_TOKEN\n\n" +
+      "Or add to your Zed settings.json:\n" +
+      '{\n' +
+      '  "agent_servers": {\n' +
+      '    "Z AI Agent": {\n' +
+      '      "env": {\n' +
+      '        "ANTHROPIC_AUTH_TOKEN": "your-z-ai-api-key"\n' +
+      '      }\n' +
+      '    }\n' +
+      '  }\n' +
+      "}\n\n" +
+      "Get your API key from: https://z.ai"
     );
   }
 
