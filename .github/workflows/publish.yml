@@ -85,15 +85,9 @@ jobs:
 
       - name: Create zip archive
         if: matrix.archive == 'zip'
-        shell: bash
+        shell: pwsh
         run: |
-          cd dist-pkg
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            powershell Compress-Archive -Path * -DestinationPath ../z-ai-acp-${{ matrix.platform }}.zip
-          else
-            zip -r ../z-ai-acp-${{ matrix.platform }}.zip .
-          fi
-          cd ..
+          Compress-Archive -Path dist-pkg/* -DestinationPath z-ai-acp-${{ matrix.platform }}.zip
 
       - name: Generate SHA256 for zip
         if: matrix.archive == 'zip' && runner.os == 'Windows'
