@@ -151,9 +151,16 @@ export class ClaudeAcpAgent implements Agent {
 
     // Z.AI API Key authentication method
     const authMethod: any = {
-      description: "Configure ANTHROPIC_AUTH_TOKEN in Zed settings (agent_servers > Z AI Agent > env)",
-      name: "Configure Z.AI API Key",
+      description: "Enter your Z.AI API key to get started. Get one at https://z.ai",
+      name: "Z.AI API Key",
       id: "z-ai-api-key",
+      _meta: {
+        input: {
+          type: "password",
+          placeholder: "sk-...",
+          label: "API Key",
+        },
+      },
     };
 
     // If client supports terminal-auth capability, use that instead.
@@ -412,8 +419,20 @@ export class ClaudeAcpAgent implements Agent {
   }
 
   async authenticate(params: AuthenticateRequest): Promise<void> {
-    // Check if API key is provided in _meta
-    const apiKey = (params._meta as any)?.apiKey;
+    // Try to extract API key from various possible locations in _meta
+    const meta = params._meta as any;
+    let apiKey: string | undefined;
+
+    // Check common patterns for API key in _meta
+    if (meta) {
+      apiKey =
+        meta.apiKey ||           // Direct apiKey field
+        meta.input ||             // Input field from prompt
+        meta.value ||             // Value field
+        meta["api-key"] ||        // Kebab-case
+        meta["API_KEY"] ||        // Uppercase
+        meta.token;               // Generic token field
+    }
 
     if (apiKey && typeof apiKey === "string" && apiKey.trim() !== "") {
       // Save API key to settings and set environment variable
@@ -425,18 +444,9 @@ export class ClaudeAcpAgent implements Agent {
 
     // If no API key provided, throw error with instructions
     throw new Error(
-      "API key not provided. Please configure ANTHROPIC_AUTH_TOKEN in Zed settings:\n\n" +
+      "API key not provided. Please enter your Z.AI API key when prompted.\n\n" +
+      "Alternatively, configure ANTHROPIC_AUTH_TOKEN in Zed settings:\n" +
       "Settings > Extensions > Z AI Agent > env > ANTHROPIC_AUTH_TOKEN\n\n" +
-      "Or add to your Zed settings.json:\n" +
-      '{\n' +
-      '  "agent_servers": {\n' +
-      '    "Z AI Agent": {\n' +
-      '      "env": {\n' +
-      '        "ANTHROPIC_AUTH_TOKEN": "your-z-ai-api-key"\n' +
-      '      }\n' +
-      '    }\n' +
-      '  }\n' +
-      "}\n\n" +
       "Get your API key from: https://z.ai"
     );
   }
