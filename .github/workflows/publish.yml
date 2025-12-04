@@ -54,23 +54,26 @@ jobs:
           cp package.json dist-pkg/
           cp README.md dist-pkg/ || true
           cp icon.svg dist-pkg/ || true
-          cp extension.toml dist-pkg/ || true
 
       - name: Create wrapper script (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          echo '#!/bin/bash' > dist-pkg/${{ matrix.binary }}
-          echo 'DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"' >> dist-pkg/${{ matrix.binary }}
-          echo 'exec node "$DIR/dist/index.js" "$@"' >> dist-pkg/${{ matrix.binary }}
+          cat > dist-pkg/${{ matrix.binary }} << 'EOF'
+          #!/bin/bash
+          DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+          exec node "$DIR/dist/index.js" "$@"
+          EOF
           chmod +x dist-pkg/${{ matrix.binary }}
 
       - name: Create wrapper script (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          echo '@echo off' > dist-pkg/${{ matrix.binary }}
-          echo 'node "%~dp0\dist\index.js" %*' >> dist-pkg/${{ matrix.binary }}
+          cat > dist-pkg/${{ matrix.binary }} << 'EOF'
+          @echo off
+          node "%~dp0\dist\index.js" %*
+          EOF
 
       - name: Create tar.gz archive
         if: matrix.archive == 'tar.gz'
