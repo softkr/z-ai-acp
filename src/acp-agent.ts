@@ -64,10 +64,12 @@ export interface Logger {
 }
 
 type Session = {
-  query: Query;
+  query: Query | null;
   input: Pushable<SDKUserMessage>;
   cancelled: boolean;
   permissionMode: PermissionMode;
+  isAuthRequired: boolean;
+  sessionParams?: NewSessionRequest; // Store params for later query creation
 };
 
 type BackgroundTerminal =
@@ -179,34 +181,24 @@ export class ClaudeAcpAgent implements Agent {
   async initialize(request: InitializeRequest): Promise<InitializeResponse> {
     this.clientCapabilities = request.clientCapabilities;
 
-    // Z.AI API Key authentication method
+    // Get the path to current executable for terminal-auth
+    const executablePath = process.argv[1] || "z-ai-acp";
+
+    // Z.AI API Key authentication method with terminal-auth
     const authMethod: any = {
       description: "Enter your Z.AI API key to get started. Get one at https://z.ai",
       name: "Z.AI API Key",
       id: "z-ai-api-key",
       _meta: {
-        input: {
-          type: "password",
-          placeholder: "sk-...",
-          label: "API Key",
+        "terminal-auth": {
+          command: "node",
+          args: [executablePath, "--setup"],
+          label: "Setup Z.AI API Key",
         },
       },
     };
 
     this.logger.log("Returning authMethod:", JSON.stringify(authMethod));
-
-    // If client supports terminal-auth capability, use that instead.
-    // if (request.clientCapabilities?._meta?.["terminal-auth"] === true) {
-    //   const cliPath = fileURLToPath(import.meta.resolve("@anthropic-ai/claude-agent-sdk/cli.js"));
-
-    //   authMethod._meta = {
-    //     "terminal-auth": {
-    //       command: "node",
-    //       args: [cliPath, "/login"],
-    //       label: "Claude Code Login",
-    //     },
-    //   };
-    // }
 
     return {
       protocolVersion: 1,
@@ -235,16 +227,17 @@ export class ClaudeAcpAgent implements Agent {
       hasMeta: !!params._meta,
     }));
 
-    // Check if API key is configured
+    // Check if API key is configured - don't throw, just flag it
+    let isAuthRequired = false;
     if (!process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_AUTH_TOKEN.trim() === "") {
-      throw RequestError.authRequired();
+      isAuthRequired = true;
     }
 
     if (
       fs.existsSync(path.resolve(os.homedir(), ".claude.json.backup")) &&
       !fs.existsSync(path.resolve(os.homedir(), ".claude.json"))
     ) {
-      throw RequestError.authRequired();
+      isAuthRequired = true;
     }
 
     const sessionId = uuidv7();
@@ -395,15 +388,19 @@ export class ClaudeAcpAgent implements Agent {
 
     this.logger.log("Creating query with cwd:", options.cwd);
 
-    let q;
-    try {
-      q = query({
-        prompt: input,
-        options,
-      });
-    } catch (error) {
-      this.logger.error("Error creating query:", error);
-      throw error;
+    let q: Query | null = null;
+
+    // Only create query if we have API key
+    if (!isAuthRequired) {
+      try {
+        q = query({
+          prompt: input,
+          options,
+        });
+      } catch (error) {
+        this.logger.error("Error creating query:", error);
+        throw error;
+      }
     }
 
     this.sessions[sessionId] = {
@@ -411,10 +408,27 @@ export class ClaudeAcpAgent implements Agent {
       input: input,
       cancelled: false,
       permissionMode,
+      isAuthRequired,
+      sessionParams: params, // Store for later query creation
     };
 
-    const availableCommands = await getAvailableSlashCommands(q);
-    const models = await getAvailableModels(q);
+    // If auth required, return dummy models. Otherwise fetch real ones.
+    let availableCommands: AvailableCommand[] = [];
+    let models: SessionModelState;
+
+    if (isAuthRequired) {
+      models = {
+        availableModels: [{
+          modelId: "claude-3-5-sonnet-20241022",
+          name: "Claude 3.5 Sonnet",
+          description: "Most intelligent model"
+        }],
+        currentModelId: "claude-3-5-sonnet-20241022"
+      };
+    } else {
+      availableCommands = await getAvailableSlashCommands(q!);
+      models = await getAvailableModels(q!);
+    }
 
     // Needs to happen after we return the session
     setTimeout(() => {
@@ -526,9 +540,90 @@ export class ClaudeAcpAgent implements Agent {
       throw new Error("Session not found");
     }
 
-    this.sessions[params.sessionId].cancelled = false;
+    const session = this.sessions[params.sessionId];
+    session.cancelled = false;
 
-    const { query, input } = this.sessions[params.sessionId];
+    // Handle Auth Required State - ask for API key in chat
+    if (session.isAuthRequired) {
+      const userInput = params.prompt
+        .map(p => p.type === "text" ? p.text : "")
+        .join("")
+        .trim();
+
+      if (userInput && userInput.length > 10) {
+        // Validate the API key
+        this.logger.log("Validating API key from chat input...");
+        const validation = await validateApiKey(userInput);
+
+        if (!validation.isValid) {
+          await this.client.sessionUpdate({
+            sessionId: params.sessionId,
+            update: {
+              sessionUpdate: "agent_message_chunk",
+              content: {
+                type: "text",
+                text: "❌ API 키가 유효하지 않습니다.\n\n" +
+                  (validation.error || "") + "\n\n" +
+                  "올바른 API 키를 다시 입력해주세요.\n" +
+                  "🔑 API 키 발급: https://z.ai"
+              }
+            }
+          });
+          return { stopReason: "end_turn" };
+        }
+
+        // Save valid API key
+        saveApiKey(userInput);
+        process.env.ANTHROPIC_AUTH_TOKEN = userInput;
+        session.isAuthRequired = false;
+
+        await this.client.sessionUpdate({
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: {
+              type: "text",
+              text: "✅ API 키가 저장되었습니다!\n\n" +
+                "새로운 세션을 시작해주세요.\n" +
+                "(Cmd/Ctrl + N 또는 새 채팅 시작)"
+            }
+          }
+        });
+        return { stopReason: "end_turn" };
+      } else {
+        // Ask for API key
+        await this.client.sessionUpdate({
+          sessionId: params.sessionId,
+          update: {
+            sessionUpdate: "agent_message_chunk",
+            content: {
+              type: "text",
+              text: "🔑 **Z.AI API 키가 필요합니다**\n\n" +
+                "API 키를 이 채팅창에 입력해주세요.\n\n" +
+                "API 키 발급: https://z.ai"
+            }
+          }
+        });
+        return { stopReason: "end_turn" };
+      }
+    }
+
+    // If query is null (shouldn't happen after auth), ask to restart
+    if (!session.query) {
+      await this.client.sessionUpdate({
+        sessionId: params.sessionId,
+        update: {
+          sessionUpdate: "agent_message_chunk",
+          content: {
+            type: "text",
+            text: "⚠️ 세션을 다시 시작해주세요."
+          }
+        }
+      });
+      return { stopReason: "end_turn" };
+    }
+
+    const { query, input } = session;
 
     input.push(promptToClaude(params));
     while (true) {
@@ -716,14 +811,20 @@ export class ClaudeAcpAgent implements Agent {
       throw new Error("Session not found");
     }
     this.sessions[params.sessionId].cancelled = true;
-    await this.sessions[params.sessionId].query.interrupt();
+    const query = this.sessions[params.sessionId].query;
+    if (query) {
+      await query.interrupt();
+    }
   }
 
   async setSessionModel(params: SetSessionModelRequest): Promise<SetSessionModelResponse | void> {
     if (!this.sessions[params.sessionId]) {
       throw new Error("Session not found");
     }
-    await this.sessions[params.sessionId].query.setModel(params.modelId);
+    const query = this.sessions[params.sessionId].query;
+    if (query) {
+      await query.setModel(params.modelId);
+    }
   }
 
   async setSessionMode(params: SetSessionModeRequest): Promise<SetSessionModeResponse> {
@@ -738,7 +839,10 @@ export class ClaudeAcpAgent implements Agent {
       case "plan":
         this.sessions[params.sessionId].permissionMode = params.modeId;
         try {
-          await this.sessions[params.sessionId].query.setPermissionMode(params.modeId);
+          const query = this.sessions[params.sessionId].query;
+          if (query) {
+            await query.setPermissionMode(params.modeId);
+          }
         } catch (error) {
           const errorMessage =
             error instanceof Error && error.message ? error.message : "Invalid Mode";
