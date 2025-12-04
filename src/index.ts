@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Load managed settings and apply environment variables
-import { loadManagedSettings, applyEnvironmentSettings, ensureApiKey } from "./utils.js";
+import { loadManagedSettings, applyEnvironmentSettings, ensureApiKey, clearApiKey } from "./utils.js";
 import { runAcp } from "./acp-agent.js";
 
 const managedSettings = loadManagedSettings();
@@ -22,6 +22,13 @@ process.on("unhandledRejection", (reason, promise) => {
 
 // Wrap top-level await in async IIFE for CommonJS compatibility
 (async () => {
+  // Check for --clear-key flag
+  if (process.argv.includes("--clear-key")) {
+    clearApiKey();
+    console.log("✓ API 키가 삭제되었습니다.");
+    process.exit(0);
+  }
+
   // Check for --setup flag
   if (process.argv.includes("--setup")) {
     await ensureApiKey();
