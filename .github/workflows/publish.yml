@@ -53,6 +53,8 @@ jobs:
           cp -r node_modules dist-pkg/
           cp package.json dist-pkg/
           cp README.md dist-pkg/ || true
+          cp icon.svg dist-pkg/ || true
+          cp extension.toml dist-pkg/ || true
 
       - name: Create wrapper script (Unix)
         if: runner.os != 'Windows'
