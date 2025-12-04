@@ -1,1 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16"><path d="M3 3h10L7.5 11h5v2H3l5.5-8H3V3z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16">
+  <path fill="#000" d="M8.25 3.8L7.55 4.8c-0.1 0.15-0.29 0.25-0.48 0.25H3.3V3.8h4.95z"/>
+  <polygon fill="#000" points="12.95,3.8 7.0,12.2 3.05,12.2 9.0,3.8"/>
+  <path fill="#000" d="M7.75 12.2l0.7-1.0c0.1-0.15 0.29-0.25 0.48-0.25h3.77v1.25H7.75z"/>
+</svg>
