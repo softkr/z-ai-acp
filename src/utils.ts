@@ -351,3 +351,109 @@ export async function ensureApiKey(): Promise<void> {
     }
   }
 }
+
+/**
+ * Validates API key by making a test request to Z.AI API
+ * @param apiKey - The API key to validate
+ * @returns Object with isValid flag and optional error message
+ */
+export async function validateApiKey(apiKey: string): Promise<{ isValid: boolean; error?: string }> {
+  const baseUrl = process.env.ANTHROPIC_BASE_URL || "https://api.z.ai/api/anthropic";
+
+  try {
+    const response = await fetch(`${baseUrl}/v1/models`, {
+      method: "GET",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+    });
+
+    if (response.ok) {
+      return { isValid: true };
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return {
+        isValid: false,
+        error: "API 키가 유효하지 않습니다. 올바른 키를 입력해주세요."
+      };
+    }
+
+    if (response.status === 404) {
+      // /v1/models endpoint might not exist, try a minimal messages request
+      return await validateApiKeyWithMessagesEndpoint(apiKey, baseUrl);
+    }
+
+    return {
+      isValid: false,
+      error: `API 요청 실패 (상태 코드: ${response.status})`
+    };
+  } catch (error) {
+    // Network error or other issues - try alternative validation
+    return await validateApiKeyWithMessagesEndpoint(apiKey, baseUrl);
+  }
+}
+
+/**
+ * Alternative validation using messages endpoint with minimal request
+ */
+async function validateApiKeyWithMessagesEndpoint(
+  apiKey: string,
+  baseUrl: string
+): Promise<{ isValid: boolean; error?: string }> {
+  try {
+    const response = await fetch(`${baseUrl}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-3-5-haiku-20241022",
+        max_tokens: 1,
+        messages: [{ role: "user", content: "hi" }],
+      }),
+    });
+
+    // 200 or 400 (bad request but authenticated) means key is valid
+    if (response.ok || response.status === 400) {
+      return { isValid: true };
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return {
+        isValid: false,
+        error: "API 키가 유효하지 않습니다. 올바른 키를 입력해주세요."
+      };
+    }
+
+    // For other errors, assume key might be valid (don't block user)
+    return { isValid: true };
+  } catch (error) {
+    // Network errors - don't block, assume valid and let actual usage determine
+    console.error("API 키 검증 중 네트워크 오류:", error);
+    return { isValid: true };
+  }
+}
+
+/**
+ * Clears the stored API key from settings (used when key is invalid)
+ */
+export function clearApiKey(): void {
+  const settingsPath = getManagedSettingsPath();
+
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as ManagedSettings;
+    if (settings.env) {
+      delete settings.env.ANTHROPIC_AUTH_TOKEN;
+      writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf8");
+    }
+  } catch {
+    // Ignore errors if file doesn't exist
+  }
+
+  // Also clear from environment
+  delete process.env.ANTHROPIC_AUTH_TOKEN;
+}

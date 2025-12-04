@@ -40,7 +40,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
 import { v7 as uuidv7 } from "uuid";
-import { nodeToWebReadable, nodeToWebWritable, Pushable, unreachable, saveApiKey } from "./utils.js";
+import { nodeToWebReadable, nodeToWebWritable, Pushable, unreachable, saveApiKey, validateApiKey, clearApiKey } from "./utils.js";
 import { createMcpServer, EDIT_TOOL_NAMES, toolNames } from "./mcp-server.js";
 import {
   toolInfoFromToolUse,
@@ -480,10 +480,26 @@ export class ClaudeAcpAgent implements Agent {
     }
 
     if (apiKey && typeof apiKey === "string" && apiKey.trim() !== "") {
+      const trimmedKey = apiKey.trim();
+
+      // Validate API key before saving
+      this.logger.log("Validating API key...");
+      const validation = await validateApiKey(trimmedKey);
+
+      if (!validation.isValid) {
+        this.logger.error("API key validation failed:", validation.error);
+        throw new Error(
+          "❌ API 키 인증 실패\n\n" +
+          (validation.error || "API 키가 유효하지 않습니다.") + "\n\n" +
+          "올바른 API 키를 다시 입력해주세요.\n" +
+          "🔑 API 키 발급: https://z.ai"
+        );
+      }
+
       // Save API key to settings and set environment variable
-      saveApiKey(apiKey.trim());
-      process.env.ANTHROPIC_AUTH_TOKEN = apiKey.trim();
-      this.logger.log("API key configured successfully");
+      saveApiKey(trimmedKey);
+      process.env.ANTHROPIC_AUTH_TOKEN = trimmedKey;
+      this.logger.log("API key validated and configured successfully");
       return;
     }
 
@@ -549,15 +565,44 @@ export class ClaudeAcpAgent implements Agent {
                 throw RequestError.authRequired();
               }
               if (message.is_error) {
+                // Check for authentication-related errors in result
+                if (
+                  message.result.includes("401") ||
+                  message.result.includes("403") ||
+                  message.result.includes("authentication") ||
+                  message.result.includes("Unauthorized") ||
+                  message.result.includes("invalid_api_key") ||
+                  message.result.includes("Invalid API") ||
+                  message.result.includes("API key")
+                ) {
+                  this.logger.error("Authentication error detected in result, clearing API key and requesting re-auth");
+                  clearApiKey();
+                  throw RequestError.authRequired();
+                }
                 throw RequestError.internalError(undefined, message.result);
               }
               return { stopReason: "end_turn" };
             }
             case "error_during_execution":
               if (message.is_error) {
+                const errorMsg = message.errors.join(", ") || message.subtype;
+                // Check for authentication-related errors
+                if (
+                  errorMsg.includes("401") ||
+                  errorMsg.includes("403") ||
+                  errorMsg.includes("authentication") ||
+                  errorMsg.includes("Unauthorized") ||
+                  errorMsg.includes("invalid_api_key") ||
+                  errorMsg.includes("Invalid API") ||
+                  errorMsg.includes("API key")
+                ) {
+                  this.logger.error("Authentication error detected, clearing API key and requesting re-auth");
+                  clearApiKey();
+                  throw RequestError.authRequired();
+                }
                 throw RequestError.internalError(
                   undefined,
-                  message.errors.join(", ") || message.subtype,
+                  errorMsg,
                 );
               }
               return { stopReason: "end_turn" };
