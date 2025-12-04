@@ -10,7 +10,7 @@ import {
   createReadStream,
   createWriteStream,
 } from "node:fs";
-import { platform, homedir } from "node:os";
+import { homedir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { Logger } from "./acp-agent.js";
@@ -389,7 +389,7 @@ export async function validateApiKey(apiKey: string): Promise<{ isValid: boolean
       isValid: false,
       error: `API 요청 실패 (상태 코드: ${response.status})`
     };
-  } catch (error) {
+  } catch {
     // Network error or other issues - try alternative validation
     return await validateApiKeyWithMessagesEndpoint(apiKey, baseUrl);
   }

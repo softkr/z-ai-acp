@@ -190,7 +190,7 @@ export class ClaudeAcpAgent implements Agent {
     this.clientCapabilities = request.clientCapabilities;
 
     // Get the path to current executable for terminal-auth
-    const executablePath = process.argv[1] || "z-ai-acp";
+    const executablePath = process.argv[1] || process.execPath;
 
     // Z.AI API Key authentication method with terminal-auth
     const authMethod: any = {
@@ -199,8 +199,8 @@ export class ClaudeAcpAgent implements Agent {
       id: "z-ai-api-key",
       _meta: {
         "terminal-auth": {
-          command: "node",
-          args: [executablePath, "--setup"],
+          command: executablePath,
+          args: ["--setup"],
           label: "Setup Z.AI API Key",
         },
       },
@@ -443,12 +443,17 @@ export class ClaudeAcpAgent implements Agent {
       models = {
         availableModels: [
           {
-            modelId: "claude-3-5-sonnet-20241022",
-            name: "Claude 3.5 Sonnet",
-            description: "Most intelligent model",
+            modelId: "glm-4.6",
+            name: "GLM-4.6",
+            description: "Z.AI의 가장 강력한 모델 (Claude 3.5 Sonnet 매핑)",
+          },
+          {
+            modelId: "glm-4.5-air",
+            name: "GLM-4.5-Air",
+            description: "빠르고 효율적인 모델 (Claude 3.5 Haiku 매핑)",
           },
         ],
-        currentModelId: "claude-3-5-sonnet-20241022",
+        currentModelId: "glm-4.6",
       };
     } else {
       availableCommands = await getAvailableSlashCommands(q!);
@@ -503,7 +508,10 @@ export class ClaudeAcpAgent implements Agent {
   }
 
   async authenticate(params: AuthenticateRequest): Promise<void> {
-    // Try to extract API key from various possible locations in _meta
+    // Note: terminal-auth is handled by the client calling the executable with --setup flag
+    // This method is called after terminal-auth completes or for non-terminal auth flows
+
+    // Fallback: Try to extract API key from _meta (for clients that don't support terminal)
     const meta = params._meta as any;
     let apiKey: string | undefined;
 
@@ -546,8 +554,9 @@ export class ClaudeAcpAgent implements Agent {
     // If no API key provided, throw error with instructions
     throw new Error(
       "⚠️ Z.AI API Key Required\n\n" +
-        "Please click the 'Configure Z.AI API Key' button above to enter your API key.\n\n" +
-        "Or manually add to Zed settings.json:\n" +
+        "터미널에서 API 키 설정 스크립트를 실행해주세요.\n\n" +
+        "수동 설정 방법:\n" +
+        "Zed settings.json에 다음을 추가:\n" +
         "{\n" +
         '  "agent_servers": {\n' +
         '    "Z AI Agent": {\n' +
