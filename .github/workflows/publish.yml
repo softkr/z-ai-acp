@@ -60,21 +60,17 @@ jobs:
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          cat > dist-pkg/${{ matrix.binary }} << 'EOF'
-          #!/bin/bash
-          DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-          exec node "$DIR/dist/index.js" "$@"
-          EOF
+          echo '#!/bin/bash' > dist-pkg/${{ matrix.binary }}
+          echo 'DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"' >> dist-pkg/${{ matrix.binary }}
+          echo 'exec node "$DIR/dist/index.js" "$@"' >> dist-pkg/${{ matrix.binary }}
           chmod +x dist-pkg/${{ matrix.binary }}
 
       - name: Create wrapper script (Windows)
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cat > dist-pkg/${{ matrix.binary }} << 'EOF'
-          @echo off
-          node "%~dp0\dist\index.js" %*
-          EOF
+          echo '@echo off' > dist-pkg/${{ matrix.binary }}
+          echo 'node "%~dp0\dist\index.js" %*' >> dist-pkg/${{ matrix.binary }}
 
       - name: Create tar.gz archive
         if: matrix.archive == 'tar.gz'
