@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.17
+
+- **Feature**: AI 에이전트 정체성을 GLM으로 변경
+  - 시스템 프롬프트를 GLM 대규모 언어 모델로 업데이트
+  - 지푸AI(智谱AI)에서 개발된 AI 어시스턴트로 자기소개
+  - 6가지 핵심 지침 추가를 통해 일관된 응답 제공
+
 ## 0.10.10
 
 - Update to @agentclientprotocol/sdk@0.7.0
