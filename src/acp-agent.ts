@@ -193,10 +193,11 @@ export class ClaudeAcpAgent implements Agent {
     const executablePath = process.argv[1] || process.execPath;
 
     // Z.AI API Key authentication method with terminal-auth
+    // Note: description should be null/undefined for terminal-auth to work properly
     const authMethod: any = {
-      description: "Enter your Z.AI API key to get started. Get one at https://z.ai",
-      name: "Z.AI API Key",
+      name: "Setup Z.AI API Key",
       id: "z-ai-api-key",
+      description: null,
       _meta: {
         "terminal-auth": {
           command: executablePath,
@@ -508,8 +509,59 @@ export class ClaudeAcpAgent implements Agent {
   }
 
   async authenticate(params: AuthenticateRequest): Promise<void> {
-    // Note: terminal-auth is handled by the client calling the executable with --setup flag
-    // This method is called after terminal-auth completes or for non-terminal auth flows
+    this.logger.log("authenticate() called with methodId:", params.methodId);
+
+    // If terminal capability is available, run setup in terminal
+    if (this.clientCapabilities?.terminal && this.client.createTerminal) {
+      this.logger.log("Running terminal-based API key setup...");
+
+      try {
+        // Get the path to current executable
+        const executablePath = process.argv[1] || process.execPath;
+
+        this.logger.log("Executable path:", executablePath);
+
+        // Create terminal and run setup command
+        const handle = await this.client.createTerminal({
+          command: executablePath,
+          args: ["--setup"],
+          env: [],
+          sessionId: "", // No session needed for auth
+          outputByteLimit: 32_000,
+        });
+
+        this.logger.log("Terminal created, waiting for completion...");
+
+        // Wait for terminal to complete
+        await handle.waitForExit();
+
+        this.logger.log("Terminal completed, reloading settings...");
+
+        // Reload environment from settings file
+        const settingsPath = path.join(os.homedir(), ".config", "z-ai-acp", "managed-settings.json");
+        if (fs.existsSync(settingsPath)) {
+          const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+          if (settings.env?.ANTHROPIC_AUTH_TOKEN) {
+            process.env.ANTHROPIC_AUTH_TOKEN = settings.env.ANTHROPIC_AUTH_TOKEN;
+            this.logger.log("API key loaded from settings");
+            return; // Success
+          }
+        }
+
+        throw new Error("API 키가 설정되지 않았습니다. 다시 시도해주세요.");
+      } catch (error) {
+        this.logger.error("Terminal setup failed:", error);
+        throw new Error(
+          "❌ API 키 설정 실패\n\n" +
+            (error instanceof Error ? error.message : String(error)) +
+            "\n\n수동으로 설정하려면 Zed settings.json에 다음을 추가하세요:\n" +
+            '{\n  "agent_servers": {\n    "Z AI Agent": {\n      "env": {\n' +
+            '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
+            "      }\n    }\n  }\n}\n\n" +
+            "🔑 API 키 발급: https://z.ai",
+        );
+      }
+    }
 
     // Fallback: Try to extract API key from _meta (for clients that don't support terminal)
     const meta = params._meta as any;
