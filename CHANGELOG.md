@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.26 (2025-12-05)
+
+### Bug Fixes
+- Fixed package.json build:binaries script (removed --no-bytecode flag causing pkg errors)
+- Updated all extension.toml archive URLs to v0.0.26
+
 ## 0.0.25 (2025-12-05)
 
 ### Performance Optimizations
