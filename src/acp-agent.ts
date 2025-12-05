@@ -191,8 +191,9 @@ export class ClaudeAcpAgent implements Agent {
 
     this.logger.log("Client capabilities:", JSON.stringify(request.clientCapabilities));
 
-    // Get the path to current executable for terminal-auth
-    const executablePath = process.argv[1] || process.execPath;
+    // Get the path to current script for terminal-auth
+    const scriptPath = process.argv[1] || process.execPath;
+    this.logger.log("Script path for terminal-auth:", scriptPath);
 
     // Z.AI API Key authentication method
     // Check if client supports terminal-auth
@@ -206,11 +207,12 @@ export class ClaudeAcpAgent implements Agent {
     };
 
     // Only add terminal-auth metadata if client supports it
+    // Use 'node' as command since dist/index.js is not directly executable
     if (supportsTerminalAuth) {
       authMethod._meta = {
         "terminal-auth": {
-          command: executablePath,
-          args: ["--setup"],
+          command: "node",
+          args: [scriptPath, "--setup"],
           label: "Setup Z.AI API Key",
         },
       };
