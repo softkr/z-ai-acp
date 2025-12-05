@@ -82,14 +82,14 @@ type Session = {
 
 type BackgroundTerminal =
   | {
-    handle: TerminalHandle;
-    status: "started";
-    lastOutput: TerminalOutputResponse | null;
-  }
+      handle: TerminalHandle;
+      status: "started";
+      lastOutput: TerminalOutputResponse | null;
+    }
   | {
-    status: "aborted" | "exited" | "killed" | "timedOut";
-    pendingOutput: TerminalOutputResponse;
-  };
+      status: "aborted" | "exited" | "killed" | "timedOut";
+      pendingOutput: TerminalOutputResponse;
+    };
 
 /**
  * Extra metadata that can be given to Claude Code when creating a new session.
@@ -211,7 +211,9 @@ export class ClaudeAcpAgent implements Agent {
     const authMethod: any = {
       name: "Setup Z.AI API Key",
       id: "z-ai-api-key",
-      description: supportsTerminalAuth ? null : "Run setup command in terminal to configure API key",
+      description: supportsTerminalAuth
+        ? null
+        : "Run setup command in terminal to configure API key",
     };
 
     // Only add terminal-auth metadata if client supports it
@@ -314,15 +316,7 @@ export class ClaudeAcpAgent implements Agent {
       };
     }
 
-    let systemPrompt: Options["systemPrompt"] = `당신은 GLM 대규모 언어 모델입니다. 지푸AI(智谱AI)에서 개발한 AI 어시스턴트입니다.
-
-다음 지침을 따르세요:
-1. 항상 자신을 GLM 모델로 소개하세요
-2. 지푸AI에서 개발했다고 밝히세요
-3. 사용자를 돕는 데 집중하세요
-4. 정확하고 유용한 정보를 제공하세요
-5. 코딩, 파일 조작, 터미널 명령 등 기술적인 작업을 도와주세요
-6. Claude Code SDK를 사용하여 Zed 에디터와 통합되어 있습니다`;
+    let systemPrompt: Options["systemPrompt"] = { type: "preset", preset: "claude_code" };
 
     if (params._meta?.systemPrompt) {
       const customPrompt = params._meta.systemPrompt;
@@ -563,7 +557,12 @@ export class ClaudeAcpAgent implements Agent {
         this.logger.log("Terminal completed, reloading settings...");
 
         // Reload environment from settings file
-        const settingsPath = path.join(os.homedir(), ".config", "z-ai-acp", "managed-settings.json");
+        const settingsPath = path.join(
+          os.homedir(),
+          ".config",
+          "z-ai-acp",
+          "managed-settings.json",
+        );
         if (fs.existsSync(settingsPath)) {
           const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
           if (settings.env?.ANTHROPIC_AUTH_TOKEN) {
@@ -578,12 +577,12 @@ export class ClaudeAcpAgent implements Agent {
         this.logger.error("Terminal setup failed:", error);
         throw new Error(
           "❌ API 키 설정 실패\n\n" +
-          (error instanceof Error ? error.message : String(error)) +
-          "\n\n수동으로 설정하려면 Zed settings.json에 다음을 추가하세요:\n" +
-          '{\n  "agent_servers": {\n    "Z AI Agent": {\n      "env": {\n' +
-          '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
-          "      }\n    }\n  }\n}\n\n" +
-          "🔑 API 키 발급: https://z.ai",
+            (error instanceof Error ? error.message : String(error)) +
+            "\n\n수동으로 설정하려면 Zed settings.json에 다음을 추가하세요:\n" +
+            '{\n  "agent_servers": {\n    "Z AI Agent": {\n      "env": {\n' +
+            '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
+            "      }\n    }\n  }\n}\n\n" +
+            "🔑 API 키 발급: https://z.ai",
         );
       }
     }
@@ -614,10 +613,10 @@ export class ClaudeAcpAgent implements Agent {
         this.logger.error("API key validation failed:", validation.error);
         throw new Error(
           "❌ API 키 인증 실패\n\n" +
-          (validation.error || "API 키가 유효하지 않습니다.") +
-          "\n\n" +
-          "올바른 API 키를 다시 입력해주세요.\n" +
-          "🔑 API 키 발급: https://z.ai",
+            (validation.error || "API 키가 유효하지 않습니다.") +
+            "\n\n" +
+            "올바른 API 키를 다시 입력해주세요.\n" +
+            "🔑 API 키 발급: https://z.ai",
         );
       }
 
@@ -631,19 +630,19 @@ export class ClaudeAcpAgent implements Agent {
     // If no API key provided, throw error with instructions
     throw new Error(
       "⚠️ Z.AI API Key Required\n\n" +
-      "터미널에서 API 키 설정 스크립트를 실행해주세요.\n\n" +
-      "수동 설정 방법:\n" +
-      "Zed settings.json에 다음을 추가:\n" +
-      "{\n" +
-      '  "agent_servers": {\n' +
-      '    "Z AI Agent": {\n' +
-      '      "env": {\n' +
-      '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
-      "      }\n" +
-      "    }\n" +
-      "  }\n" +
-      "}\n\n" +
-      "🔑 Get your API key from: https://z.ai",
+        "터미널에서 API 키 설정 스크립트를 실행해주세요.\n\n" +
+        "수동 설정 방법:\n" +
+        "Zed settings.json에 다음을 추가:\n" +
+        "{\n" +
+        '  "agent_servers": {\n' +
+        '    "Z AI Agent": {\n' +
+        '      "env": {\n' +
+        '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
+        "      }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}\n\n" +
+        "🔑 Get your API key from: https://z.ai",
     );
   }
 
@@ -705,7 +704,12 @@ export class ClaudeAcpAgent implements Agent {
         }
 
         // Reload settings to check if API key was set
-        const settingsPath = path.join(os.homedir(), ".config", "z-ai-acp", "managed-settings.json");
+        const settingsPath = path.join(
+          os.homedir(),
+          ".config",
+          "z-ai-acp",
+          "managed-settings.json",
+        );
         let apiKeySet = false;
         if (fs.existsSync(settingsPath)) {
           try {
@@ -811,9 +815,19 @@ export class ClaudeAcpAgent implements Agent {
               }
               if (message.is_error) {
                 // Check for authentication-related errors in result
-                const authErrors = ["401", "403", "authentication", "Unauthorized", "invalid_api_key", "Invalid API", "API key"];
-                if (authErrors.some(err => message.result.includes(err))) {
-                  this.logger.error("Authentication error detected in result, clearing API key and requesting re-auth");
+                const authErrors = [
+                  "401",
+                  "403",
+                  "authentication",
+                  "Unauthorized",
+                  "invalid_api_key",
+                  "Invalid API",
+                  "API key",
+                ];
+                if (authErrors.some((err) => message.result.includes(err))) {
+                  this.logger.error(
+                    "Authentication error detected in result, clearing API key and requesting re-auth",
+                  );
                   clearApiKey();
                   throw RequestError.authRequired();
                 }
@@ -826,9 +840,19 @@ export class ClaudeAcpAgent implements Agent {
                 const errorMsg = message.errors.join(", ") || message.subtype;
 
                 // Check for authentication-related errors
-                const authErrors = ["401", "403", "authentication", "Unauthorized", "invalid_api_key", "Invalid API", "API key"];
-                if (authErrors.some(err => errorMsg.includes(err))) {
-                  this.logger.error("Authentication error detected, clearing API key and requesting re-auth");
+                const authErrors = [
+                  "401",
+                  "403",
+                  "authentication",
+                  "Unauthorized",
+                  "invalid_api_key",
+                  "Invalid API",
+                  "API key",
+                ];
+                if (authErrors.some((err) => errorMsg.includes(err))) {
+                  this.logger.error(
+                    "Authentication error detected, clearing API key and requesting re-auth",
+                  );
                   clearApiKey();
                   throw RequestError.authRequired();
                 }
@@ -913,7 +937,7 @@ export class ClaudeAcpAgent implements Agent {
           const content =
             message.type === "assistant"
               ? // Handled by stream events above
-              message.message.content.filter((item) => !["text", "thinking"].includes(item.type))
+                message.message.content.filter((item) => !["text", "thinking"].includes(item.type))
               : message.message.content;
 
           for (const notification of toAcpNotifications(
