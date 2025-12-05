@@ -74,8 +74,6 @@ describe.skipIf(!process.env.RUN_INTEGRATION_TESTS)("ACP subprocess integration"
     }
 
     async sessionUpdate(params: SessionNotification): Promise<void> {
-      console.error("RECEIVED", JSON.stringify(params, null, 4));
-
       switch (params.update.sessionUpdate) {
         case "agent_message_chunk": {
           if (params.update.content.type === "text") {

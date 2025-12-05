@@ -1,14 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
-import { createMcpServer } from "../mcp-server.js";
+import { createMcpServer, toolNames } from "../mcp-server.js";
 
 const SESSION_ID = "session-id";
 
 function getTool(server: any, name: string) {
-  const tools = server?._registeredTools;
-  if (!tools || !tools[name]) {
-    throw new Error(`Tool ${name} not registered`);
-  }
-  return tools[name];
+  // For McpServer, tools are registered in a different structure
+  // We need to access the tools through the server's internal structure
+  const unqualifiedName = name.replace("mcp__acp__", "");
+  return {
+    callback: async (input: any) => {
+      // Find the tool handler by calling the server's tool handling logic
+      const tools = server._registeredTools || {};
+      const tool = tools[unqualifiedName] || tools[name];
+
+      if (!tool || !tool.handler) {
+        throw new Error(`Tool ${name} not found or has no handler`);
+      }
+
+      // Call the tool handler directly
+      return await tool.handler(input, {});
+    },
+  };
 }
 
 function createAgent(overrides: Record<string, unknown> = {}) {
@@ -38,7 +50,7 @@ describe("MCP server read-related tools", () => {
       fs: { readTextFile: true },
     });
 
-    const readTool = getTool(server, "Read");
+    const readTool = getTool(server, toolNames.read);
 
     const result = await readTool.callback({
       file_path: "/tmp/file.txt",
@@ -57,7 +69,7 @@ describe("MCP server read-related tools", () => {
       fs: { readTextFile: true, writeTextFile: true },
     });
 
-    const editTool = getTool(server, "Edit");
+    const editTool = getTool(server, toolNames.edit);
 
     const result = await editTool.callback({
       file_path: "/tmp/file.txt",

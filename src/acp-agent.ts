@@ -327,7 +327,6 @@ export class ClaudeAcpAgent implements Agent {
         "append" in customPrompt &&
         typeof customPrompt.append === "string"
       ) {
-        // If systemPrompt is a string, append to it
         if (typeof systemPrompt === "string") {
           systemPrompt = systemPrompt + "\n\n" + customPrompt.append;
         }
@@ -796,7 +795,6 @@ export class ClaudeAcpAgent implements Agent {
             case "compact_boundary":
             case "hook_response":
             case "status":
-              // Todo: process via status api: https://docs.claude.com/en/docs/claude-code/hooks#hook-output
               break;
             default:
               unreachable(message, this.logger);
