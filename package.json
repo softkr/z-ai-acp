@@ -1,25 +1,10 @@
 {
   "name": "z-ai-acp",
-  "publishConfig": {
-    "access": "public"
-  },
-  "version": "0.0.27",
-  "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration (TypeScript)",
-  "main": "dist/lib.js",
-  "bin": {
-    "z-ai-acp": "./dist/index.js"
-  },
+  "version": "0.0.28",
+  "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration",
   "type": "module",
-  "files": [
-    "dist/",
-    "README.md",
-    "LICENSE",
-    "package.json"
-  ],
   "scripts": {
     "build": "tsc",
-    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node18 --format=cjs --outfile=dist/bundle.cjs --packages=bundle --external:@anthropic-ai/claude-agent-sdk --external:@anthropic-ai/claude-code",
-    "build:binaries": "yarn bundle && pkg dist/bundle.cjs --public --targets node18-macos-arm64,node18-macos-x64,node18-linux-x64,node18-win-x64 --output bin/z-ai-acp",
     "start": "node dist/index.js",
     "dev": "npm run build && npm run start",
     "lint": "eslint src --ext .ts",
@@ -30,21 +15,8 @@
     "test": "vitest",
     "test:integration": "RUN_INTEGRATION_TESTS=true vitest run",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build"
+    "test:coverage": "vitest run --coverage"
   },
-  "keywords": [
-    "claude",
-    "acp",
-    "agent",
-    "anthropic",
-    "typescript",
-    "sdk",
-    "code",
-    "z-ai",
-    "glm",
-    "integration"
-  ],
   "homepage": "https://github.com/softkr/z-ai-acp#readme",
   "bugs": {
     "url": "https://github.com/softkr/z-ai-acp/issues"
@@ -70,20 +42,12 @@
     "@types/uuid": "11.0.0",
     "@typescript-eslint/eslint-plugin": "8.48.1",
     "@typescript-eslint/parser": "8.48.1",
-    "esbuild": "^0.27.1",
     "eslint": "9.39.1",
     "eslint-config-prettier": "10.1.8",
     "globals": "16.5.0",
-    "pkg": "^5.8.1",
     "prettier": "3.7.4",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
     "vitest": "4.0.15"
-  },
-  "pkg": {
-    "assets": [
-      "node_modules/@anthropic-ai/claude-agent-sdk/**/*",
-      "node_modules/@anthropic-ai/claude-code/**/*"
-    ]
   }
 }
