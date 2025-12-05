@@ -151,7 +151,9 @@ export function loadManagedSettings(): ManagedSettings | null {
 export function applyEnvironmentSettings(settings: ManagedSettings): void {
   if (settings.env) {
     for (const [key, value] of Object.entries(settings.env)) {
-      process.env[key] = value;
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
     }
   }
 
@@ -161,7 +163,7 @@ export function applyEnvironmentSettings(settings: ManagedSettings): void {
 
     // Override env vars with z_ai config if enabled
     if (zAiConfig.enabled) {
-      if (zAiConfig.api_endpoint) {
+      if (zAiConfig.api_endpoint && process.env.ANTHROPIC_BASE_URL === undefined) {
         process.env.ANTHROPIC_BASE_URL = zAiConfig.api_endpoint;
       }
 
