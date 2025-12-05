@@ -189,23 +189,32 @@ export class ClaudeAcpAgent implements Agent {
   async initialize(request: InitializeRequest): Promise<InitializeResponse> {
     this.clientCapabilities = request.clientCapabilities;
 
+    this.logger.log("Client capabilities:", JSON.stringify(request.clientCapabilities));
+
     // Get the path to current executable for terminal-auth
     const executablePath = process.argv[1] || process.execPath;
 
-    // Z.AI API Key authentication method with terminal-auth
-    // Note: description should be null/undefined for terminal-auth to work properly
+    // Z.AI API Key authentication method
+    // Check if client supports terminal-auth
+    const supportsTerminalAuth = request.clientCapabilities?._meta?.["terminal-auth"] === true;
+    this.logger.log("Client supports terminal-auth:", supportsTerminalAuth);
+
     const authMethod: any = {
       name: "Setup Z.AI API Key",
       id: "z-ai-api-key",
-      description: null,
-      _meta: {
+      description: supportsTerminalAuth ? null : "Run setup command in terminal to configure API key",
+    };
+
+    // Only add terminal-auth metadata if client supports it
+    if (supportsTerminalAuth) {
+      authMethod._meta = {
         "terminal-auth": {
           command: executablePath,
           args: ["--setup"],
           label: "Setup Z.AI API Key",
         },
-      },
-    };
+      };
+    }
 
     this.logger.log("Returning authMethod:", JSON.stringify(authMethod));
 
@@ -239,7 +248,7 @@ export class ClaudeAcpAgent implements Agent {
       }),
     );
 
-    // Check if API key is configured - don't throw, just flag it
+    // Check if API key is configured
     let isAuthRequired = false;
     if (!process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_AUTH_TOKEN.trim() === "") {
       isAuthRequired = true;
@@ -250,6 +259,12 @@ export class ClaudeAcpAgent implements Agent {
       !fs.existsSync(path.resolve(os.homedir(), ".claude.json"))
     ) {
       isAuthRequired = true;
+    }
+
+    // If auth is required, throw authRequired error so Zed shows the auth button
+    if (isAuthRequired) {
+      this.logger.log("Auth required - throwing authRequired error");
+      throw RequestError.authRequired();
     }
 
     const sessionId = uuidv7();
@@ -633,6 +648,11 @@ export class ClaudeAcpAgent implements Agent {
     // Handle Auth Required State - run terminal setup automatically
     if (session.isAuthRequired) {
       // Check if terminal capability is available
+      this.logger.log("Auth required - checking terminal capability:", {
+        hasTerminalCapability: !!this.clientCapabilities?.terminal,
+        hasCreateTerminal: !!this.client.createTerminal,
+      });
+
       if (this.clientCapabilities?.terminal && this.client.createTerminal) {
         // Show message first
         await this.client.sessionUpdate({
@@ -646,6 +666,8 @@ export class ClaudeAcpAgent implements Agent {
           },
         });
 
+        this.logger.log("Creating terminal for API key setup...");
+
         // Create terminal and run setup script
         const handle = await this.client.createTerminal({
           command: "bash",
@@ -658,8 +680,36 @@ export class ClaudeAcpAgent implements Agent {
           outputByteLimit: 32_000,
         });
 
+        this.logger.log("Terminal created, waiting for exit...");
+
         // Wait for terminal to complete
-        await handle.waitForExit();
+        const exitResult = await handle.waitForExit();
+        this.logger.log("Terminal exited:", exitResult);
+
+        // Check terminal output for debugging
+        try {
+          const output = await handle.currentOutput();
+          this.logger.log("Terminal output:", JSON.stringify(output));
+        } catch (e) {
+          this.logger.error("Failed to get terminal output:", e);
+        }
+
+        // Reload settings to check if API key was set
+        const settingsPath = path.join(os.homedir(), ".config", "z-ai-acp", "managed-settings.json");
+        let apiKeySet = false;
+        if (fs.existsSync(settingsPath)) {
+          try {
+            const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+            if (settings.env?.ANTHROPIC_AUTH_TOKEN) {
+              process.env.ANTHROPIC_AUTH_TOKEN = settings.env.ANTHROPIC_AUTH_TOKEN;
+              session.isAuthRequired = false;
+              apiKeySet = true;
+              this.logger.log("API key loaded from settings file");
+            }
+          } catch (e) {
+            this.logger.error("Failed to load settings:", e);
+          }
+        }
 
         // Ask to restart session
         await this.client.sessionUpdate({
@@ -668,7 +718,9 @@ export class ClaudeAcpAgent implements Agent {
             sessionUpdate: "agent_message_chunk",
             content: {
               type: "text",
-              text: "\n\n✅ 설정 완료! **새로운 세션**을 시작해주세요. (Cmd/Ctrl + N)",
+              text: apiKeySet
+                ? "\n\n✅ API 키 설정 완료! **새로운 세션**을 시작해주세요. (Cmd/Ctrl + N)"
+                : "\n\n⚠️ API 키가 설정되지 않았습니다. **새로운 세션**을 시작하고 다시 시도해주세요. (Cmd/Ctrl + N)",
             },
           },
         });
