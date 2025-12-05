@@ -138,12 +138,52 @@ npm install
 # Build the project
 npm run build
 
+# Run linter
+npm run lint
+
+# Format code
+npm run format
+
 # Run tests
 npm test
+
+# Run integration tests
+npm run test:integration
 
 # Create binaries for distribution
 npm run build:binaries
 ```
+
+## Performance Optimization
+
+Version 0.0.24+ includes several performance improvements:
+
+- **Cached Node Executable Discovery**: Node executable path is cached to avoid repeated filesystem lookups
+- **Optimized Error Handling**: Consolidated authentication error detection with array-based checks
+- **Memory-Efficient String Operations**: Improved markdown escaping with cached regex patterns
+- **Reduced Object Allocations**: Streamlined error responses and session checks
+- **Type Definition Optimization**: Better TypeScript type inference reduces runtime overhead
+
+## Troubleshooting
+
+### API Key Issues
+
+If you encounter authentication errors:
+
+```bash
+# Clear the stored API key
+z-ai-acp --clear-key
+
+# Run setup again
+z-ai-acp --setup
+```
+
+### Connection Issues
+
+Verify your connection to Z.AI:
+- Check that `ANTHROPIC_BASE_URL` is set to `https://api.z.ai/api/anthropic`
+- Ensure your API key is valid at https://z.ai
+- Check your network connection and firewall settings
 
 ## License
 

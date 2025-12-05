@@ -405,17 +405,19 @@ export function toolInfoFromToolUse(
   }
 }
 
+type ToolResultTypes =
+  | ToolResultBlockParam
+  | BetaWebSearchToolResultBlockParam
+  | BetaWebFetchToolResultBlockParam
+  | WebSearchToolResultBlockParam
+  | BetaCodeExecutionToolResultBlockParam
+  | BetaBashCodeExecutionToolResultBlockParam
+  | BetaTextEditorCodeExecutionToolResultBlockParam
+  | BetaRequestMCPToolResultBlockParam
+  | BetaToolSearchToolResultBlockParam;
+
 export function toolUpdateFromToolResult(
-  toolResult:
-    | ToolResultBlockParam
-    | BetaWebSearchToolResultBlockParam
-    | BetaWebFetchToolResultBlockParam
-    | WebSearchToolResultBlockParam
-    | BetaCodeExecutionToolResultBlockParam
-    | BetaBashCodeExecutionToolResultBlockParam
-    | BetaTextEditorCodeExecutionToolResultBlockParam
-    | BetaRequestMCPToolResultBlockParam
-    | BetaToolSearchToolResultBlockParam,
+  toolResult: ToolResultTypes,
   toolUse: any | undefined,
 ): ToolUpdate {
   switch (toolUse?.name) {
@@ -541,14 +543,17 @@ export function planEntries(input: { todos: ClaudePlanEntry[] }): PlanEntry[] {
   }));
 }
 
+// Cache compiled regex for performance
+const CODE_FENCE_REGEX = /^```+/gm;
+
 export function markdownEscape(text: string): string {
   let escape = "```";
-  for (const [m] of text.matchAll(/^```+/gm)) {
+  for (const [m] of text.matchAll(CODE_FENCE_REGEX)) {
     while (m.length >= escape.length) {
       escape += "`";
     }
   }
-  return escape + "\n" + text + (text.endsWith("\n") ? "" : "\n") + escape;
+  return `${escape}\n${text}${text.endsWith("\n") ? "" : "\n"}${escape}`;
 }
 
 /* A global variable to store callbacks that should be executed when receiving hooks from Claude Code */

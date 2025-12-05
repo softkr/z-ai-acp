@@ -7,10 +7,10 @@
   resolved "https://registry.yarnpkg.com/@agentclientprotocol/sdk/-/sdk-0.7.0.tgz#4674aa62c439d39ef5b1040e7db2eb7a4884124f"
   integrity sha512-lZrBwaP7qpDgwvhZOl61te9bpigpOXJfVTwLWqjMsnZI7oe5rgHdxGWfTHcqiRy4ITg9qbz3ApgYsxKoZpYMhg==
 
-"@anthropic-ai/claude-agent-sdk@0.1.58":
-  version "0.1.58"
-  resolved "https://registry.yarnpkg.com/@anthropic-ai/claude-agent-sdk/-/claude-agent-sdk-0.1.58.tgz#aec790bac2f611dda30536bf986a3a4d91e00b91"
-  integrity sha512-Gc8YjY734D7qUT4I7eTF/vvu7m2umCKm03OGEZs3fGnqwSzVi0SWfGIkTZn4qLtvEbfojm/qXTRd/9OM2vhi3Q==
+"@anthropic-ai/claude-agent-sdk@0.1.59":
+  version "0.1.59"
+  resolved "https://registry.yarnpkg.com/@anthropic-ai/claude-agent-sdk/-/claude-agent-sdk-0.1.59.tgz#30cf1658dfd0fcf92e355a2cada25ccb365ad908"
+  integrity sha512-9TMxQCkIOd9W3c+owLtTW7d1ZgWeYoz1tbUwqz1TiKJTZmsmAFHUfXebQsJBZ+W15g6msqA6ln9yYxOKlNnlGw==
   optionalDependencies:
     "@img/sharp-darwin-arm64" "^0.33.5"
     "@img/sharp-darwin-x64" "^0.33.5"
@@ -21,10 +21,10 @@
     "@img/sharp-linuxmusl-x64" "^0.33.5"
     "@img/sharp-win32-x64" "^0.33.5"
 
-"@anthropic-ai/claude-code@2.0.58":
-  version "2.0.58"
-  resolved "https://registry.yarnpkg.com/@anthropic-ai/claude-code/-/claude-code-2.0.58.tgz#58ee1f30fbe9e34637b5b55cc476e0279a383482"
-  integrity sha512-6/n+PrMrU6QuA0rV23oimJK6R3BxefXeBLnxTumVabmzRX5oYjZLGLIdP0PCTA6rKuSeXUjjGd1yb55B0clO+w==
+"@anthropic-ai/claude-code@2.0.59":
+  version "2.0.59"
+  resolved "https://registry.yarnpkg.com/@anthropic-ai/claude-code/-/claude-code-2.0.59.tgz#cd900d99a51fe7ac2cecd57e3e53ecde9ea4abfd"
+  integrity sha512-QCOtahWfU8WkAUoM4IzA01L57pScOj8WehYEzVSlF6sVKXILrpC+hZSKgOh+0ZR/Zj7IYesc6rbKoKJVxpF9Vg==
   optionalDependencies:
     "@img/sharp-darwin-arm64" "^0.33.5"
     "@img/sharp-darwin-x64" "^0.33.5"
@@ -35,10 +35,10 @@
     "@img/sharp-linuxmusl-x64" "^0.33.5"
     "@img/sharp-win32-x64" "^0.33.5"
 
-"@anthropic-ai/sdk@0.71.0":
-  version "0.71.0"
-  resolved "https://registry.yarnpkg.com/@anthropic-ai/sdk/-/sdk-0.71.0.tgz#59fed712060dd5c4f232d18cded78304797df845"
-  integrity sha512-go1XeWXmpxuiTkosSXpb8tokLk2ZLkIRcXpbWVwJM6gH5OBtHOVsfPfGuqI1oW7RRt4qc59EmYbrXRZ0Ng06Jw==
+"@anthropic-ai/sdk@0.71.1":
+  version "0.71.1"
+  resolved "https://registry.yarnpkg.com/@anthropic-ai/sdk/-/sdk-0.71.1.tgz#018c04a7b17b647f3a4a18378ec6c8bf111fd59b"
+  integrity sha512-ViVzuaWMxHygfB2G6/1OufWDjbJGRl3duR0N1CEx/D5O9nv1yLNtbO3Lri5sQdF+aDHP+0nL6WyOMwCJUDicRQ==
   dependencies:
     json-schema-to-ts "^3.1.1"
 

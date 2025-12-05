@@ -137,12 +137,20 @@ type ToolUseCache = {
 // Bypass Permissions doesn't work if we are a root/sudo user
 const IS_ROOT = (process.geteuid?.() ?? process.getuid?.()) === 0;
 
+// Cache for node executable path
+let cachedNodePath: string | null = null;
+
 // Find the system node executable
 function findNodeExecutable(): string {
+  if (cachedNodePath) return cachedNodePath;
+
   try {
     // Try to use 'which node' to find node in PATH
     const nodePath = execSync("which node", { encoding: "utf8" }).trim();
-    if (nodePath) return nodePath;
+    if (nodePath) {
+      cachedNodePath = nodePath;
+      return nodePath;
+    }
   } catch {
     // If which fails, try common locations
   }
@@ -156,13 +164,13 @@ function findNodeExecutable(): string {
   ];
 
   for (const p of commonPaths) {
-    try {
-      if (fs.existsSync(p)) return p;
-    } catch {
-      continue;
+    if (fs.existsSync(p)) {
+      cachedNodePath = p;
+      return p;
     }
   }
 
+  cachedNodePath = process.execPath;
   return process.execPath; // final fallback
 }
 
@@ -803,18 +811,9 @@ export class ClaudeAcpAgent implements Agent {
               }
               if (message.is_error) {
                 // Check for authentication-related errors in result
-                if (
-                  message.result.includes("401") ||
-                  message.result.includes("403") ||
-                  message.result.includes("authentication") ||
-                  message.result.includes("Unauthorized") ||
-                  message.result.includes("invalid_api_key") ||
-                  message.result.includes("Invalid API") ||
-                  message.result.includes("API key")
-                ) {
-                  this.logger.error(
-                    "Authentication error detected in result, clearing API key and requesting re-auth",
-                  );
+                const authErrors = ["401", "403", "authentication", "Unauthorized", "invalid_api_key", "Invalid API", "API key"];
+                if (authErrors.some(err => message.result.includes(err))) {
+                  this.logger.error("Authentication error detected in result, clearing API key and requesting re-auth");
                   clearApiKey();
                   throw RequestError.authRequired();
                 }
@@ -822,28 +821,21 @@ export class ClaudeAcpAgent implements Agent {
               }
               return { stopReason: "end_turn" };
             }
-            case "error_during_execution":
+            case "error_during_execution": {
               if (message.is_error) {
                 const errorMsg = message.errors.join(", ") || message.subtype;
+
                 // Check for authentication-related errors
-                if (
-                  errorMsg.includes("401") ||
-                  errorMsg.includes("403") ||
-                  errorMsg.includes("authentication") ||
-                  errorMsg.includes("Unauthorized") ||
-                  errorMsg.includes("invalid_api_key") ||
-                  errorMsg.includes("Invalid API") ||
-                  errorMsg.includes("API key")
-                ) {
-                  this.logger.error(
-                    "Authentication error detected, clearing API key and requesting re-auth",
-                  );
+                const authErrors = ["401", "403", "authentication", "Unauthorized", "invalid_api_key", "Invalid API", "API key"];
+                if (authErrors.some(err => errorMsg.includes(err))) {
+                  this.logger.error("Authentication error detected, clearing API key and requesting re-auth");
                   clearApiKey();
                   throw RequestError.authRequired();
                 }
                 throw RequestError.internalError(undefined, errorMsg);
               }
               return { stopReason: "end_turn" };
+            }
             case "error_max_budget_usd":
             case "error_max_turns":
             case "error_max_structured_output_retries":

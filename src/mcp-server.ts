@@ -88,19 +88,14 @@ Usage:
         },
       },
       async (input) => {
-        try {
-          const session = agent.sessions[sessionId];
-          if (!session) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: "The user has left the building",
-                },
-              ],
-            };
-          }
+        const session = agent.sessions[sessionId];
+        if (!session) {
+          return {
+            content: [{ type: "text", text: "The user has left the building" }],
+          };
+        }
 
+        try {
           const readResponse = await agent.readTextFile({
             sessionId,
             path: input.file_path,
@@ -143,12 +138,7 @@ Usage:
           };
         } catch (error: any) {
           return {
-            content: [
-              {
-                type: "text",
-                text: "Reading file failed: " + error.message,
-              },
-            ],
+            content: [{ type: "text", text: `Reading file failed: ${error.message}` }],
           };
         }
       },
@@ -186,35 +176,24 @@ Usage:
         },
       },
       async (input) => {
+        const session = agent.sessions[sessionId];
+        if (!session) {
+          return {
+            content: [{ type: "text", text: "The user has left the building" }],
+          };
+        }
+
         try {
-          const session = agent.sessions[sessionId];
-          if (!session) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: "The user has left the building",
-                },
-              ],
-            };
-          }
           await agent.writeTextFile({
             sessionId,
             path: input.file_path,
             content: input.content,
           });
 
-          return {
-            content: [],
-          };
+          return { content: [] };
         } catch (error: any) {
           return {
-            content: [
-              {
-                type: "text",
-                text: "Writing file failed: " + error.message,
-              },
-            ],
+            content: [{ type: "text", text: `Writing file failed: ${error.message}` }],
           };
         }
       },
@@ -257,19 +236,14 @@ Usage:
         },
       },
       async (input) => {
-        try {
-          const session = agent.sessions[sessionId];
-          if (!session) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: "The user has left the building",
-                },
-              ],
-            };
-          }
+        const session = agent.sessions[sessionId];
+        if (!session) {
+          return {
+            content: [{ type: "text", text: "The user has left the building" }],
+          };
+        }
 
+        try {
           const readResponse = await agent.readTextFile({
             sessionId,
             path: input.file_path,
@@ -296,21 +270,11 @@ Usage:
           });
 
           return {
-            content: [
-              {
-                type: "text",
-                text: patch,
-              },
-            ],
+            content: [{ type: "text", text: patch }],
           };
         } catch (error: any) {
           return {
-            content: [
-              {
-                type: "text",
-                text: "Editing file failed: " + (error?.message ?? String(error)),
-              },
-            ],
+            content: [{ type: "text", text: `Editing file failed: ${error?.message ?? String(error)}` }],
           };
         }
       },

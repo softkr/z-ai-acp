@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.0.25 (2025-12-05)
+
+### Performance Optimizations
+- **Cached Node Executable Discovery**: Node executable path is now cached to avoid repeated filesystem lookups
+- **Optimized Error Handling**: Consolidated authentication error detection using array-based checks for better performance
+- **Memory-Efficient String Operations**: Improved markdown escaping with cached regex patterns
+- **Reduced Object Allocations**: Streamlined error responses and session validity checks
+- **Type Definition Optimization**: Better TypeScript type inference reduces runtime overhead
+
+### Code Quality Improvements
+- Removed duplicate variable initialization in `extractLinesWithByteLimit`
+- Simplified error response formatting with template literals
+- Refactored session checks to be more efficient (check before try-catch blocks)
+- Consolidated duplicate authentication error checking code
+- Improved type definitions with named type aliases
+
+### Bug Fixes
+- Removed temporary test file (`reproduce_issue.ts`)
+- Fixed potential memory leaks in error handling paths
+
+### Documentation
+- Updated README.md with performance optimization details
+- Added troubleshooting section for common issues
+- Added development commands documentation
+
 ## 0.0.17
 
 - **Feature**: AI 에이전트 정체성을 GLM으로 변경
