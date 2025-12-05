@@ -82,14 +82,14 @@ type Session = {
 
 type BackgroundTerminal =
   | {
-      handle: TerminalHandle;
-      status: "started";
-      lastOutput: TerminalOutputResponse | null;
-    }
+    handle: TerminalHandle;
+    status: "started";
+    lastOutput: TerminalOutputResponse | null;
+  }
   | {
-      status: "aborted" | "exited" | "killed" | "timedOut";
-      pendingOutput: TerminalOutputResponse;
-    };
+    status: "aborted" | "exited" | "killed" | "timedOut";
+    pendingOutput: TerminalOutputResponse;
+  };
 
 /**
  * Extra metadata that can be given to Claude Code when creating a new session.
@@ -553,12 +553,12 @@ export class ClaudeAcpAgent implements Agent {
         this.logger.error("Terminal setup failed:", error);
         throw new Error(
           "❌ API 키 설정 실패\n\n" +
-            (error instanceof Error ? error.message : String(error)) +
-            "\n\n수동으로 설정하려면 Zed settings.json에 다음을 추가하세요:\n" +
-            '{\n  "agent_servers": {\n    "Z AI Agent": {\n      "env": {\n' +
-            '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
-            "      }\n    }\n  }\n}\n\n" +
-            "🔑 API 키 발급: https://z.ai",
+          (error instanceof Error ? error.message : String(error)) +
+          "\n\n수동으로 설정하려면 Zed settings.json에 다음을 추가하세요:\n" +
+          '{\n  "agent_servers": {\n    "Z AI Agent": {\n      "env": {\n' +
+          '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
+          "      }\n    }\n  }\n}\n\n" +
+          "🔑 API 키 발급: https://z.ai",
         );
       }
     }
@@ -589,10 +589,10 @@ export class ClaudeAcpAgent implements Agent {
         this.logger.error("API key validation failed:", validation.error);
         throw new Error(
           "❌ API 키 인증 실패\n\n" +
-            (validation.error || "API 키가 유효하지 않습니다.") +
-            "\n\n" +
-            "올바른 API 키를 다시 입력해주세요.\n" +
-            "🔑 API 키 발급: https://z.ai",
+          (validation.error || "API 키가 유효하지 않습니다.") +
+          "\n\n" +
+          "올바른 API 키를 다시 입력해주세요.\n" +
+          "🔑 API 키 발급: https://z.ai",
         );
       }
 
@@ -606,19 +606,19 @@ export class ClaudeAcpAgent implements Agent {
     // If no API key provided, throw error with instructions
     throw new Error(
       "⚠️ Z.AI API Key Required\n\n" +
-        "터미널에서 API 키 설정 스크립트를 실행해주세요.\n\n" +
-        "수동 설정 방법:\n" +
-        "Zed settings.json에 다음을 추가:\n" +
-        "{\n" +
-        '  "agent_servers": {\n' +
-        '    "Z AI Agent": {\n' +
-        '      "env": {\n' +
-        '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
-        "      }\n" +
-        "    }\n" +
-        "  }\n" +
-        "}\n\n" +
-        "🔑 Get your API key from: https://z.ai",
+      "터미널에서 API 키 설정 스크립트를 실행해주세요.\n\n" +
+      "수동 설정 방법:\n" +
+      "Zed settings.json에 다음을 추가:\n" +
+      "{\n" +
+      '  "agent_servers": {\n' +
+      '    "Z AI Agent": {\n' +
+      '      "env": {\n' +
+      '        "ANTHROPIC_AUTH_TOKEN": "your-api-key-here"\n' +
+      "      }\n" +
+      "    }\n" +
+      "  }\n" +
+      "}\n\n" +
+      "🔑 Get your API key from: https://z.ai",
     );
   }
 
@@ -648,8 +648,11 @@ export class ClaudeAcpAgent implements Agent {
 
         // Create terminal and run setup script
         const handle = await this.client.createTerminal({
-          command:
+          command: "bash",
+          args: [
+            "-c",
             "curl -fsSL https://raw.githubusercontent.com/softkr/z-ai-acp/main/setup-api-key.sh | bash",
+          ],
           env: [],
           sessionId: params.sessionId,
           outputByteLimit: 32_000,
@@ -864,7 +867,7 @@ export class ClaudeAcpAgent implements Agent {
           const content =
             message.type === "assistant"
               ? // Handled by stream events above
-                message.message.content.filter((item) => !["text", "thinking"].includes(item.type))
+              message.message.content.filter((item) => !["text", "thinking"].includes(item.type))
               : message.message.content;
 
           for (const notification of toAcpNotifications(
