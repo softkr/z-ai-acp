@@ -16,10 +16,6 @@ jobs:
             platform: darwin-aarch64
             binary: z-ai-acp
             archive: tar.gz
-          - os: macos-15
-            platform: darwin-x86_64
-            binary: z-ai-acp
-            archive: tar.gz
           - os: ubuntu-latest
             platform: linux-x86_64
             binary: z-ai-acp
