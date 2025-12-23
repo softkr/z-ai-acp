@@ -1,6 +1,6 @@
 id = "z-AI"
 name = "z.Ai Agent"
-version = "0.0.31"
+version = "0.0.32"
 schema_version = 1
 authors = ["softkr"]
 description = "Z.AI powered coding agent with Claude Code SDK. Setup: Add your Z.AI API key in Zed Settings > Extensions > Z AI Agent > env > ANTHROPIC_AUTH_TOKEN"
@@ -14,18 +14,18 @@ env = {}
 
 # macOS ARM64 (Apple Silicon)
 [agent_servers.zAI.targets.darwin-aarch64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.31/z-ai-acp-darwin-aarch64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.32/z-ai-acp-darwin-aarch64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
 
 # Linux x86_64
 [agent_servers.zAI.targets.linux-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.31/z-ai-acp-linux-x86_64.tar.gz"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.32/z-ai-acp-linux-x86_64.tar.gz"
 cmd = "./z-ai-acp"
 args = ["--acp"]
 
 # Windows x86_64
 [agent_servers.zAI.targets.windows-x86_64]
-archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.31/z-ai-acp-windows-x86_64.zip"
+archive = "https://github.com/softkr/z-ai-acp/releases/download/v0.0.32/z-ai-acp-windows-x86_64.zip"
 cmd = "./z-ai-acp.exe"
 args = ["--acp"]

@@ -13,9 +13,9 @@
     "enabled": true,
     "api_endpoint": "https://api.z.ai/api/anthropic",
     "model_mapping": {
-      "claude-3-5-sonnet-20241022": "glm-4.6",
-      "claude-3-5-haiku-20241022": "glm-4.5-air",
-      "claude-3-opus-20240229": "glm-4.6"
+      "claude-3-5-sonnet-20241022": "GLM-4.7",
+      "claude-3-5-haiku-20241022": "GLM-4.5-Air",
+      "claude-3-opus-20240229": "GLM-4.7"
     }
   }
 }
