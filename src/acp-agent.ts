@@ -346,6 +346,7 @@ export class ClaudeAcpAgent implements Agent {
       // Override certain fields that must be controlled by ACP
       cwd: params.cwd || process.cwd(),
       includePartialMessages: true,
+      // Note: maxThinkingTokens is set dynamically when Opus model is selected
       mcpServers: { ...(userProvidedOptions?.mcpServers || {}), ...mcpServers },
       // If we want bypassPermissions to be an option, we have to allow it here.
       // But it doesn't work in root mode, so we only activate it if it will work.
@@ -981,6 +982,23 @@ export class ClaudeAcpAgent implements Agent {
     const query = this.sessions[params.sessionId].query;
     if (query) {
       await query.setModel(params.modelId);
+
+      // Enable extended thinking for Opus models (15000 tokens default)
+      const isOpusModel =
+        params.modelId.toLowerCase().includes("opus") ||
+        params.modelId.toLowerCase().includes("glm-4.7") ||
+        params.modelId.toLowerCase().includes("glm-4.6");
+
+      if (isOpusModel) {
+        const maxThinkingTokens = process.env.MAX_THINKING_TOKENS
+          ? parseInt(process.env.MAX_THINKING_TOKENS, 10)
+          : 15000;
+        await query.setMaxThinkingTokens(maxThinkingTokens);
+        this.logger.log(`Extended thinking enabled for ${params.modelId} with ${maxThinkingTokens} tokens`);
+      } else {
+        await query.setMaxThinkingTokens(null);
+        this.logger.log(`Extended thinking disabled for ${params.modelId}`);
+      }
     }
   }
 
@@ -1163,6 +1181,19 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
   // Query doesn't give us access to the currently selected model, so we just choose the first model in the list.
   const currentModel = models[0];
   await query.setModel(currentModel.value);
+
+  // Enable extended thinking for Opus models (15000 tokens default)
+  const isOpusModel =
+    currentModel.value.toLowerCase().includes("opus") ||
+    currentModel.value.toLowerCase().includes("glm-4.7") ||
+    currentModel.value.toLowerCase().includes("glm-4.6");
+
+  if (isOpusModel) {
+    const maxThinkingTokens = process.env.MAX_THINKING_TOKENS
+      ? parseInt(process.env.MAX_THINKING_TOKENS, 10)
+      : 15000;
+    await query.setMaxThinkingTokens(maxThinkingTokens);
+  }
 
   const availableModels = models.map((model) => ({
     modelId: model.value,

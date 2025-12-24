@@ -110,6 +110,10 @@ interface ManagedSettings {
     api_endpoint?: string;
     model_mapping?: Record<string, string>;
   };
+  thinking?: {
+    enabled?: boolean;
+    max_tokens?: number;
+  };
 }
 
 // Following the rules in https://docs.anthropic.com/en/docs/claude-code/settings#settings-files
@@ -173,6 +177,13 @@ export function applyEnvironmentSettings(settings: ManagedSettings): void {
       }
 
       process.env.Z_AI_ENABLED = "true";
+    }
+  }
+
+  // Apply thinking settings
+  if (settings.thinking) {
+    if (settings.thinking.enabled !== false && settings.thinking.max_tokens) {
+      process.env.MAX_THINKING_TOKENS = String(settings.thinking.max_tokens);
     }
   }
 }
@@ -313,6 +324,10 @@ export function saveApiKey(apiKey: string): void {
           "claude-3-5-haiku-20241022": "glm-4.5-air",
           "claude-3-opus-20240229": "glm-4.6",
         },
+      },
+      thinking: {
+        enabled: true,
+        max_tokens: 15000,
       },
     };
   }

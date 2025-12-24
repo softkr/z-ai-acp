@@ -17,5 +17,9 @@
       "claude-3-5-haiku-20241022": "GLM-4.5-Air",
       "claude-3-opus-20240229": "GLM-4.7"
     }
+  },
+  "thinking": {
+    "enabled": true,
+    "max_tokens": 15000
   }
 }
