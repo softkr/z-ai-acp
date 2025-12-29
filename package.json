@@ -1,6 +1,6 @@
 {
   "name": "z-ai-acp",
-  "version": "0.0.44",
+  "version": "0.0.45",
   "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration",
   "type": "module",
   "scripts": {
@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "0.71.2",
+    "@types/minimatch": "^6.0.0",
     "@types/node": "25.0.3",
     "@types/uuid": "11.0.0",
     "@typescript-eslint/eslint-plugin": "8.50.1",
