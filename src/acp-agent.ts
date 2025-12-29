@@ -463,9 +463,9 @@ export class ClaudeAcpAgent implements Agent {
       models = {
         availableModels: [
           {
-            modelId: "glm-4.6",
-            name: "GLM-4.6",
-            description: "Z.AI의 가장 강력한 모델 (Claude 3.5 Sonnet 매핑)",
+            modelId: "glm-4.7",
+            name: "GLM-4.7",
+            description: "Z.AI의 최신 강력한 모델 (Claude 4.5 Sonnet 매핑)",
           },
           {
             modelId: "glm-4.5-air",
@@ -473,7 +473,7 @@ export class ClaudeAcpAgent implements Agent {
             description: "빠르고 효율적인 모델 (Claude 3.5 Haiku 매핑)",
           },
         ],
-        currentModelId: "glm-4.6",
+        currentModelId: "glm-4.7",
       };
     } else {
       availableCommands = await getAvailableSlashCommands(q!);

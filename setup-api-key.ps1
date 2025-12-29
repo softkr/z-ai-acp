@@ -70,9 +70,12 @@ $config = @{
         enabled = $true
         api_endpoint = "https://api.z.ai/api/anthropic"
         model_mapping = @{
-            "claude-3-5-sonnet-20241022" = "glm-4.6"
+            "claude-4.5-sonnet-20250114" = "glm-4.7"
+            "claude-4-haiku-20250114" = "glm-4.5-air"
+            "claude-4-opus-20250114" = "glm-4.7"
+            "claude-3-5-sonnet-20241022" = "glm-4.7"
             "claude-3-5-haiku-20241022" = "glm-4.5-air"
-            "claude-3-opus-20240229" = "glm-4.6"
+            "claude-3-opus-20240229" = "glm-4.7"
         }
     }
 }

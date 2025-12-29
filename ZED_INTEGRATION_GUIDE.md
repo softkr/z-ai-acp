@@ -50,7 +50,7 @@ cat > ~/.config/z-ai-acp/managed-settings.json << EOF
   },
   "zAi": {
     "enableGlmMapping": true,
-    "defaultModel": "glm-4.6",
+    "defaultModel": "glm-4.7",
     "timeoutMs": 3000000
   }
 }
