@@ -1276,18 +1276,16 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     // Ignore parse errors
   }
 
-  // Include all models in the menu, with default model marked as recommended
-  // Filter out hidden models
+  // Exclude the currently selected model from the menu to show actual model name
+  // Also filter out hidden models
   const availableModels = models
+    .filter((model) => model.value !== currentModel.value)
     .filter((model) => !hiddenModels.includes(model.value))
-    .map((model) => {
-      const isDefaultModel = defaultModelId && model.value === defaultModelId;
-      return {
-        modelId: model.value,
-        name: isDefaultModel ? "Default (recommended)" : model.displayName,
-        description: model.description,
-      };
-    });
+    .map((model) => ({
+      modelId: model.value,
+      name: model.displayName,
+      description: model.description,
+    }));
 
   return {
     availableModels,
