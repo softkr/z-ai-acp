@@ -601,3 +601,54 @@ export const createPostToolUseHook =
     }
     return { continue: true };
   };
+
+/**
+ * Creates a PreToolUse hook that checks permissions using the SettingsManager.
+ * This runs before the SDK's built-in permission rules, allowing us to enforce
+ * our own permission settings for ACP-prefixed tools.
+ */
+export const createPreToolUseHook =
+  (settingsManager: any, logger: Logger = console): HookCallback =>
+  async (input: any, _toolUseID: string | undefined) => {
+    if (input.hook_event_name !== "PreToolUse") {
+      return { continue: true };
+    }
+
+    const toolName = input.tool_name;
+    const toolInput = input.tool_input;
+
+    const permissionCheck = settingsManager.checkPermission(toolName, toolInput);
+
+    if (permissionCheck.decision !== "ask") {
+      logger.log(
+        `[PreToolUseHook] Tool: ${toolName}, Decision: ${permissionCheck.decision}, Rule: ${permissionCheck.rule}`,
+      );
+    }
+
+    switch (permissionCheck.decision) {
+      case "allow":
+        return {
+          continue: true,
+          hookSpecificOutput: {
+            hookEventName: "PreToolUse" as const,
+            permissionDecision: "allow" as const,
+            permissionDecisionReason: `Allowed by settings rule: ${permissionCheck.rule}`,
+          },
+        };
+
+      case "deny":
+        return {
+          continue: true,
+          hookSpecificOutput: {
+            hookEventName: "PreToolUse" as const,
+            permissionDecision: "deny" as const,
+            permissionDecisionReason: `Denied by settings rule: ${permissionCheck.rule}`,
+          },
+        };
+
+      case "ask":
+      default:
+        // Let the normal permission flow continue
+        return { continue: true };
+    }
+  };

@@ -5,6 +5,8 @@ import {
   AvailableCommand,
   CancelNotification,
   ClientCapabilities,
+  ForkSessionRequest,
+  ForkSessionResponse,
   InitializeRequest,
   InitializeResponse,
   ndJsonStream,
@@ -15,6 +17,8 @@ import {
   ReadTextFileRequest,
   ReadTextFileResponse,
   RequestError,
+  ResumeSessionRequest,
+  ResumeSessionResponse,
   SessionModelState,
   SessionNotification,
   SetSessionModelRequest,
@@ -39,7 +43,6 @@ import {
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as os from "node:os";
-import { v7 as uuidv7 } from "uuid";
 import {
   nodeToWebReadable,
   nodeToWebWritable,
@@ -57,11 +60,16 @@ import {
   ClaudePlanEntry,
   registerHookCallback,
   createPostToolUseHook,
+  createPreToolUseHook,
 } from "./tools.js";
+import { SettingsManager } from "./settings.js";
 import { ContentBlockParam } from "@anthropic-ai/sdk/resources";
 import { BetaContentBlock, BetaRawContentBlockDelta } from "@anthropic-ai/sdk/resources/beta.mjs";
 import packageJson from "../package.json" with { type: "json" };
 import { execSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+
+export const CLAUDE_CONFIG_DIR = process.env.CLAUDE ?? path.join(os.homedir(), ".claude");
 
 /**
  * Logger interface for customizing logging output
@@ -77,6 +85,7 @@ type Session = {
   cancelled: boolean;
   permissionMode: PermissionMode;
   isAuthRequired: boolean;
+  settingsManager: SettingsManager;
   sessionParams?: NewSessionRequest; // Store params for later query creation
 };
 
@@ -279,8 +288,13 @@ export class ClaudeAcpAgent implements Agent {
       throw RequestError.authRequired();
     }
 
-    const sessionId = uuidv7();
+    const sessionId = randomUUID();
     const input = new Pushable<SDKUserMessage>();
+
+    const settingsManager = new SettingsManager(params.cwd, {
+      logger: this.logger,
+    });
+    await settingsManager.initialize();
 
     const mcpServers: Record<string, McpServerConfig> = {};
     if (Array.isArray(params.mcpServers)) {
@@ -360,6 +374,12 @@ export class ClaudeAcpAgent implements Agent {
       }),
       hooks: {
         ...userProvidedOptions?.hooks,
+        PreToolUse: [
+          ...(userProvidedOptions?.hooks?.PreToolUse || []),
+          {
+            hooks: [createPreToolUseHook(settingsManager, this.logger)],
+          },
+        ],
         PostToolUse: [
           ...(userProvidedOptions?.hooks?.PostToolUse || []),
           {
@@ -452,6 +472,7 @@ export class ClaudeAcpAgent implements Agent {
       cancelled: false,
       permissionMode,
       isAuthRequired,
+      settingsManager,
       sessionParams: params, // Store for later query creation
     };
 
@@ -494,18 +515,23 @@ export class ClaudeAcpAgent implements Agent {
     const availableModes = [
       {
         id: "default",
-        name: "Always Ask",
-        description: "Prompts for permission on first use of each tool",
+        name: "Default",
+        description: "Standard behavior, prompts for dangerous operations",
       },
       {
         id: "acceptEdits",
         name: "Accept Edits",
-        description: "Automatically accepts file edit permissions for the session",
+        description: "Auto-accept file edit operations",
       },
       {
         id: "plan",
         name: "Plan Mode",
-        description: "Claude can analyze but not modify files or execute commands",
+        description: "Planning mode, no actual tool execution",
+      },
+      {
+        id: "dontAsk",
+        name: "Don't Ask",
+        description: "Don't prompt for permissions, deny if not pre-approved",
       },
     ];
     // Only works in non-root mode
@@ -513,7 +539,7 @@ export class ClaudeAcpAgent implements Agent {
       availableModes.push({
         id: "bypassPermissions",
         name: "Bypass Permissions",
-        description: "Skips all permission prompts",
+        description: "Bypass all permission checks",
       });
     }
 
@@ -525,6 +551,38 @@ export class ClaudeAcpAgent implements Agent {
         availableModes,
       },
     };
+  }
+
+  async unstable_forkSession(params: ForkSessionRequest): Promise<ForkSessionResponse> {
+    // Fork session support - creates a new session with same settings but new session ID
+    // For now, just create a new session with same parameters
+    this.logger.log("Fork session requested - creating new session with same parameters");
+
+    const originalParams: NewSessionRequest = {
+      cwd: params.cwd,
+      mcpServers: params.mcpServers ?? [],
+      _meta: params._meta,
+    };
+
+    const response = await this.newSession(originalParams);
+
+    return response;
+  }
+
+  async unstable_resumeSession(params: ResumeSessionRequest): Promise<ResumeSessionResponse> {
+    // Resume session support - restores a previous session
+    // For now, just create a new session with same parameters
+    this.logger.log("Resume session requested - creating new session");
+
+    const newParams: NewSessionRequest = {
+      cwd: params.cwd,
+      mcpServers: params.mcpServers ?? [],
+      _meta: params._meta,
+    };
+
+    const response = await this.newSession(newParams);
+
+    return response;
   }
 
   async authenticate(params: AuthenticateRequest): Promise<void> {
@@ -1013,6 +1071,7 @@ export class ClaudeAcpAgent implements Agent {
       case "default":
       case "acceptEdits":
       case "bypassPermissions":
+      case "dontAsk":
       case "plan":
         this.sessions[params.sessionId].permissionMode = params.modeId;
         try {

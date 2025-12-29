@@ -23,7 +23,8 @@ const unqualifiedToolNames = {
   bashOutput: "BashOutput",
 };
 
-const SERVER_PREFIX = "mcp__acp__";
+export const ACP_TOOL_NAME_PREFIX = "mcp__acp__";
+const SERVER_PREFIX = ACP_TOOL_NAME_PREFIX;
 export const toolNames = {
   read: SERVER_PREFIX + unqualifiedToolNames.read,
   edit: SERVER_PREFIX + unqualifiedToolNames.edit,
@@ -33,6 +34,7 @@ export const toolNames = {
   bashOutput: SERVER_PREFIX + unqualifiedToolNames.bashOutput,
 };
 
+export const acpToolNames = toolNames; // Alias for compatibility
 export const EDIT_TOOL_NAMES = [toolNames.edit, toolNames.write];
 
 export function createMcpServer(

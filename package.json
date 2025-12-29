@@ -1,6 +1,6 @@
 {
   "name": "z-ai-acp",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration",
   "type": "module",
   "scripts": {
@@ -33,6 +33,7 @@
     "@anthropic-ai/claude-code": "2.0.76",
     "@modelcontextprotocol/sdk": "1.25.1",
     "diff": "8.0.2",
+    "minimatch": "10.1.1",
     "uuid": "13.0.0",
     "zod": "^4.2.1"
   },
