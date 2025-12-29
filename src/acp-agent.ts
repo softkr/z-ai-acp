@@ -994,7 +994,9 @@ export class ClaudeAcpAgent implements Agent {
           ? parseInt(process.env.MAX_THINKING_TOKENS, 10)
           : 15000;
         await query.setMaxThinkingTokens(maxThinkingTokens);
-        this.logger.log(`Extended thinking enabled for ${params.modelId} with ${maxThinkingTokens} tokens`);
+        this.logger.log(
+          `Extended thinking enabled for ${params.modelId} with ${maxThinkingTokens} tokens`,
+        );
       } else {
         await query.setMaxThinkingTokens(null);
         this.logger.log(`Extended thinking disabled for ${params.modelId}`);
@@ -1195,11 +1197,14 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     await query.setMaxThinkingTokens(maxThinkingTokens);
   }
 
-  const availableModels = models.map((model) => ({
-    modelId: model.value,
-    name: model.displayName,
-    description: model.description,
-  }));
+  // Exclude the currently selected model from the menu to avoid duplication
+  const availableModels = models
+    .filter((model) => model.value !== currentModel.value)
+    .map((model) => ({
+      modelId: model.value,
+      name: model.displayName,
+      description: model.description,
+    }));
 
   return {
     availableModels,
