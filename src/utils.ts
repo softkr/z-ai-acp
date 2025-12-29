@@ -109,6 +109,7 @@ interface ManagedSettings {
     enabled?: boolean;
     api_endpoint?: string;
     model_mapping?: Record<string, string>;
+    default_model?: string;
   };
   thinking?: {
     enabled?: boolean;
@@ -174,6 +175,11 @@ export function applyEnvironmentSettings(settings: ManagedSettings): void {
       // Set model mapping for reference
       if (zAiConfig.model_mapping) {
         process.env.Z_AI_MODEL_MAPPING_CONFIG = JSON.stringify(zAiConfig.model_mapping);
+      }
+
+      // Set default model if configured
+      if (zAiConfig.default_model) {
+        process.env.Z_AI_DEFAULT_MODEL = zAiConfig.default_model;
       }
 
       process.env.Z_AI_ENABLED = "true";
@@ -327,6 +333,7 @@ export function saveApiKey(apiKey: string): void {
           "claude-3-5-haiku-20241022": "glm-4.5-air",
           "claude-3-opus-20240229": "glm-4.7",
         },
+        default_model: "claude-4.5-sonnet-20250114",
       },
       thinking: {
         enabled: true,

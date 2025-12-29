@@ -1239,8 +1239,18 @@ export class ClaudeAcpAgent implements Agent {
 async function getAvailableModels(query: Query): Promise<SessionModelState> {
   const models = await query.supportedModels();
 
-  // Query doesn't give us access to the currently selected model, so we just choose the first model in the list.
-  const currentModel = models[0];
+  // Check if default model is configured
+  const defaultModelId = process.env.Z_AI_DEFAULT_MODEL;
+  let currentModel = models[0];
+
+  // If default model is set, try to find it in the available models
+  if (defaultModelId) {
+    const foundModel = models.find((model) => model.value === defaultModelId);
+    if (foundModel) {
+      currentModel = foundModel;
+    }
+  }
+
   await query.setModel(currentModel.value);
 
   // Enable extended thinking for Opus models (15000 tokens default)
