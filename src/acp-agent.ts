@@ -1266,14 +1266,28 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     await query.setMaxThinkingTokens(maxThinkingTokens);
   }
 
-  // Exclude the currently selected model from the menu to avoid duplication
+  // Get hidden models list
+  let hiddenModels: string[] = [];
+  try {
+    if (process.env.Z_AI_HIDDEN_MODELS) {
+      hiddenModels = JSON.parse(process.env.Z_AI_HIDDEN_MODELS);
+    }
+  } catch {
+    // Ignore parse errors
+  }
+
+  // Include all models in the menu, with default model marked as recommended
+  // Filter out hidden models
   const availableModels = models
-    .filter((model) => model.value !== currentModel.value)
-    .map((model) => ({
-      modelId: model.value,
-      name: model.displayName,
-      description: model.description,
-    }));
+    .filter((model) => !hiddenModels.includes(model.value))
+    .map((model) => {
+      const isDefaultModel = defaultModelId && model.value === defaultModelId;
+      return {
+        modelId: model.value,
+        name: isDefaultModel ? "Default (recommended)" : model.displayName,
+        description: model.description,
+      };
+    });
 
   return {
     availableModels,

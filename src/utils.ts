@@ -110,6 +110,7 @@ interface ManagedSettings {
     api_endpoint?: string;
     model_mapping?: Record<string, string>;
     default_model?: string;
+    hidden_models?: string[];
   };
   thinking?: {
     enabled?: boolean;
@@ -180,6 +181,11 @@ export function applyEnvironmentSettings(settings: ManagedSettings): void {
       // Set default model if configured
       if (zAiConfig.default_model) {
         process.env.Z_AI_DEFAULT_MODEL = zAiConfig.default_model;
+      }
+
+      // Set hidden models if configured
+      if (zAiConfig.hidden_models && zAiConfig.hidden_models.length > 0) {
+        process.env.Z_AI_HIDDEN_MODELS = JSON.stringify(zAiConfig.hidden_models);
       }
 
       process.env.Z_AI_ENABLED = "true";
@@ -334,6 +340,7 @@ export function saveApiKey(apiKey: string): void {
           "claude-3-opus-20240229": "glm-4.7",
         },
         default_model: "claude-4.5-sonnet-20250114",
+        hidden_models: ["claude-3-5-sonnet-20241022"],
       },
       thinking: {
         enabled: true,
