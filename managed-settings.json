@@ -26,6 +26,9 @@
   },
   "thinking": {
     "enabled": true,
-    "max_tokens": 15000
+    "max_tokens": 15000,
+    "effort": "medium",
+    "track_duration": true,
+    "include_in_output": true
   }
 }

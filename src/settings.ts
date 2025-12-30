@@ -26,9 +26,29 @@ export interface PermissionSettings {
   defaultMode?: string;
 }
 
+/**
+ * Extended thinking configuration options (inspired by Crush's think feature)
+ * - enabled: Enable/disable extended thinking for supported models
+ * - max_tokens: Maximum tokens allocated for thinking (default: 15000)
+ * - effort: Reasoning effort level affects token budget multiplier
+ *   - "low": 0.5x max_tokens (7,500 tokens for default)
+ *   - "medium": 1.0x max_tokens (15,000 tokens for default)
+ *   - "high": 1.5x max_tokens (22,500 tokens for default)
+ * - track_duration: Track and report thinking duration in metadata
+ * - include_in_output: Include thinking content in final output (default: true)
+ */
+export interface ThinkingConfig {
+  enabled?: boolean;
+  max_tokens?: number;
+  effort?: "low" | "medium" | "high";
+  track_duration?: boolean;
+  include_in_output?: boolean;
+}
+
 export interface ClaudeCodeSettings {
   permissions?: PermissionSettings;
   env?: Record<string, string>;
+  thinking?: ThinkingConfig;
 }
 
 export type PermissionDecision = "allow" | "deny" | "ask";

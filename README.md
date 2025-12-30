@@ -128,9 +128,55 @@ The agent stores configuration in `~/.config/z-ai-acp/managed-settings.json` wit
       "claude-3-5-haiku-20241022": "glm-4.5-air",
       "claude-3-opus-20240229": "glm-4.7"
     }
+  },
+  "thinking": {
+    "enabled": true,
+    "max_tokens": 15000,
+    "effort": "medium",
+    "track_duration": true,
+    "include_in_output": true
   }
 }
 ```
+
+### Extended Thinking Configuration
+
+The agent supports advanced thinking capabilities (inspired by [Crush](https://github.com/charmbracelet/crush)) for Opus and GLM-4.6/4.7 models:
+
+#### Configuration Options
+
+- **`enabled`** (boolean): Enable/disable extended thinking
+  - Default: `true`
+
+- **`max_tokens`** (number): Maximum tokens allocated for thinking
+  - Default: `15000`
+
+- **`effort`** (string): Reasoning effort level that affects token budget multiplier
+  - `"low"`: 0.5x max_tokens (7,500 tokens for default)
+  - `"medium"`: 1.0x max_tokens (15,000 tokens for default)
+  - `"high"`: 1.5x max_tokens (22,500 tokens for default)
+  - Default: `"medium"`
+
+- **`track_duration`** (boolean): Track and report thinking duration in metadata
+  - Default: `true`
+
+- **`include_in_output`** (boolean): Include thinking content in final output
+  - Default: `true`
+
+#### Example Configuration
+
+```json
+{
+  "thinking": {
+    "enabled": true,
+    "max_tokens": 20000,
+    "effort": "high",
+    "track_duration": true
+  }
+}
+```
+
+This configuration will allocate 30,000 tokens (20,000 × 1.5) for thinking when using Opus or GLM-4.6/4.7 models.
 
 ## Development
 

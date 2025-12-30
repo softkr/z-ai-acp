@@ -87,6 +87,8 @@ type Session = {
   isAuthRequired: boolean;
   settingsManager: SettingsManager;
   sessionParams?: NewSessionRequest; // Store params for later query creation
+  thinkingStartTime?: number | null; // Timestamp when thinking started (for duration tracking)
+  thinkingMetadata?: { totalDuration: number; tokenCount: number } | null; // Thinking session metadata
 };
 
 type BackgroundTerminal =
@@ -941,6 +943,7 @@ export class ClaudeAcpAgent implements Agent {
             this.fileContentCache,
             this.client,
             this.logger,
+            this.sessions[params.sessionId],
           )) {
             await this.client.sessionUpdate(notification);
           }
@@ -1005,6 +1008,7 @@ export class ClaudeAcpAgent implements Agent {
             this.fileContentCache,
             this.client,
             this.logger,
+            this.sessions[params.sessionId],
           )) {
             await this.client.sessionUpdate(notification);
           }
@@ -1054,13 +1058,40 @@ export class ClaudeAcpAgent implements Agent {
         actualModelId.toLowerCase().includes("glm-4.6");
 
       if (isOpusModel) {
-        const maxThinkingTokens = process.env.MAX_THINKING_TOKENS
-          ? parseInt(process.env.MAX_THINKING_TOKENS, 10)
-          : 15000;
-        await query.setMaxThinkingTokens(maxThinkingTokens);
-        this.logger.log(
-          `Extended thinking enabled for ${actualModelId} with ${maxThinkingTokens} tokens`,
-        );
+        // Get thinking configuration from settings
+        const session = this.sessions[params.sessionId];
+        const thinkingConfig = session?.settingsManager.getSettings().thinking || {};
+
+        // Check if thinking is explicitly disabled
+        if (thinkingConfig.enabled === false) {
+          await query.setMaxThinkingTokens(null);
+          this.logger.log(`Extended thinking disabled for ${actualModelId} (disabled in settings)`);
+        } else {
+          // Calculate base max thinking tokens
+          const baseMaxTokens = thinkingConfig.max_tokens ||
+            (process.env.MAX_THINKING_TOKENS ? parseInt(process.env.MAX_THINKING_TOKENS, 10) : 15000);
+
+          // Apply effort-based multiplier (inspired by Crush's reasoning effort)
+          const effortMultiplier: Record<string, number> = {
+            'low': 0.5,
+            'medium': 1.0,
+            'high': 1.5
+          };
+          const effort = thinkingConfig.effort || 'medium';
+          const multiplier = effortMultiplier[effort] || 1.0;
+          const adjustedTokens = Math.floor(baseMaxTokens * multiplier);
+
+          await query.setMaxThinkingTokens(adjustedTokens);
+          this.logger.log(
+            `Extended thinking enabled for ${actualModelId}: ${adjustedTokens} tokens (effort: ${effort}, base: ${baseMaxTokens})`
+          );
+
+          // Reset thinking metadata for new model
+          if (session) {
+            session.thinkingStartTime = null;
+            session.thinkingMetadata = null;
+          }
+        }
       } else {
         await query.setMaxThinkingTokens(null);
         this.logger.log(`Extended thinking disabled for ${actualModelId}`);
@@ -1414,6 +1445,7 @@ export function toAcpNotifications(
   fileContentCache: { [key: string]: string },
   client: AgentSideConnection,
   logger: Logger,
+  session?: Session | null,
 ): SessionNotification[] {
   if (typeof content === "string") {
     return [
@@ -1457,15 +1489,36 @@ export function toAcpNotifications(
         };
         break;
       case "thinking":
-      case "thinking_delta":
+      case "thinking_delta": {
+        // Track thinking duration (inspired by Crush's thinking duration feature)
+        const thinkingConfig = session?.settingsManager.getSettings().thinking;
+        const trackDuration = thinkingConfig?.track_duration !== false; // Default: true
+
+        // Start tracking when thinking begins
+        if (chunk.type === "thinking" && trackDuration && session) {
+          session.thinkingStartTime = Date.now();
+        }
+
+        // Calculate duration and metadata
+        let metadata: any = undefined;
+        if (trackDuration && session?.thinkingStartTime) {
+          const currentDuration = Date.now() - session.thinkingStartTime;
+          metadata = {
+            thinking_duration_ms: currentDuration,
+            thinking_state: chunk.type === "thinking" ? "in_progress" : "streaming",
+          };
+        }
+
         update = {
           sessionUpdate: "agent_thought_chunk",
           content: {
             type: "text",
             text: chunk.thinking,
           },
+          ...(metadata && { _meta: { thinking: metadata } }),
         };
         break;
+      }
       case "tool_use":
       case "server_tool_use":
       case "mcp_tool_use": {
@@ -1588,6 +1641,7 @@ export function streamEventToAcpNotifications(
   fileContentCache: { [key: string]: string },
   client: AgentSideConnection,
   logger: Logger,
+  session?: Session | null,
 ): SessionNotification[] {
   const event = message.event;
   switch (event.type) {
@@ -1600,6 +1654,7 @@ export function streamEventToAcpNotifications(
         fileContentCache,
         client,
         logger,
+        session,
       );
     case "content_block_delta":
       return toAcpNotifications(
@@ -1610,6 +1665,7 @@ export function streamEventToAcpNotifications(
         fileContentCache,
         client,
         logger,
+        session,
       );
     // No content
     case "message_start":
