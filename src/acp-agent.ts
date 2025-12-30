@@ -1282,7 +1282,10 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     // Ignore parse errors
   }
 
-  // Include all models (matching claude-code-acp behavior - shows current model in dropdown)
+  // Hide current model from dropdown to avoid showing "Opus" when "Default (recommended)" is already Opus
+  hiddenModels.push(currentModel.value);
+
+  // Filter out hidden models and the currently selected model
   const availableModels = models
     .filter((model) => !hiddenModels.includes(model.value))
     .map((model) => ({
