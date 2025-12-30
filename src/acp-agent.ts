@@ -1276,7 +1276,7 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     // Ignore parse errors
   }
 
-  // Hide current model from dropdown for cleaner UI
+  // Hide current model from dropdown to avoid duplication with "Default (recommended)"
   hiddenModels.push(currentModel.value);
 
   // Filter out hidden models and the currently selected model
