@@ -1276,7 +1276,10 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     // Ignore parse errors
   }
 
-  // Filter out hidden models (following claude-code-acp pattern)
+  // Hide current model from dropdown for cleaner UI
+  hiddenModels.push(currentModel.value);
+
+  // Filter out hidden models and the currently selected model
   const availableModels = models
     .filter((model) => !hiddenModels.includes(model.value))
     .map((model) => ({
