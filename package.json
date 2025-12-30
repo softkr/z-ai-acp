@@ -1,6 +1,6 @@
 {
   "name": "z-ai-acp",
-  "version": "0.0.50",
+  "version": "0.0.51",
   "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration",
   "type": "module",
   "scripts": {

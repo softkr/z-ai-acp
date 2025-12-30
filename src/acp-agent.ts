@@ -1239,15 +1239,21 @@ export class ClaudeAcpAgent implements Agent {
 async function getAvailableModels(query: Query): Promise<SessionModelState> {
   const models = await query.supportedModels();
 
-  // Check if default model is configured
-  const defaultModelId = process.env.Z_AI_DEFAULT_MODEL;
+  // Priority order: 1. "default" model, 2. Z_AI_DEFAULT_MODEL env var, 3. First model
   let currentModel = models[0];
 
-  // If default model is set, try to find it in the available models
-  if (defaultModelId) {
-    const foundModel = models.find((model) => model.value === defaultModelId);
-    if (foundModel) {
-      currentModel = foundModel;
+  // First, try to find the special "default" model (matching claude-code-acp behavior)
+  const defaultModel = models.find((model) => model.value === "default");
+  if (defaultModel) {
+    currentModel = defaultModel;
+  } else {
+    // If no "default" model, check if Z_AI_DEFAULT_MODEL is configured
+    const configuredDefaultModelId = process.env.Z_AI_DEFAULT_MODEL;
+    if (configuredDefaultModelId) {
+      const foundModel = models.find((model) => model.value === configuredDefaultModelId);
+      if (foundModel) {
+        currentModel = foundModel;
+      }
     }
   }
 
@@ -1276,10 +1282,7 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     // Ignore parse errors
   }
 
-  // Hide current model from dropdown to avoid duplication with "Default (recommended)"
-  hiddenModels.push(currentModel.value);
-
-  // Filter out hidden models and the currently selected model
+  // Include all models (matching claude-code-acp behavior - shows current model in dropdown)
   const availableModels = models
     .filter((model) => !hiddenModels.includes(model.value))
     .map((model) => ({
