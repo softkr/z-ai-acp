@@ -1276,8 +1276,10 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
     // Ignore parse errors
   }
 
-  // Include all models (including current) so Zed can display the current model name
-  // Filter out hidden models only
+  // Add current model to hidden list so it doesn't appear in the dropdown
+  hiddenModels.push(currentModel.value);
+
+  // Filter out hidden models and the currently selected model
   const availableModels = models
     .filter((model) => !hiddenModels.includes(model.value))
     .map((model) => ({
