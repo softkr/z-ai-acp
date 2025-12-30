@@ -1039,13 +1039,19 @@ export class ClaudeAcpAgent implements Agent {
     }
     const query = this.sessions[params.sessionId].query;
     if (query) {
-      await query.setModel(params.modelId);
+      // Map "default" to actual Opus model
+      let actualModelId = params.modelId;
+      if (params.modelId === "default") {
+        actualModelId = "claude-4-opus-20250114";
+      }
+
+      await query.setModel(actualModelId);
 
       // Enable extended thinking for Opus models (15000 tokens default)
       const isOpusModel =
-        params.modelId.toLowerCase().includes("opus") ||
-        params.modelId.toLowerCase().includes("glm-4.7") ||
-        params.modelId.toLowerCase().includes("glm-4.6");
+        actualModelId.toLowerCase().includes("opus") ||
+        actualModelId.toLowerCase().includes("glm-4.7") ||
+        actualModelId.toLowerCase().includes("glm-4.6");
 
       if (isOpusModel) {
         const maxThinkingTokens = process.env.MAX_THINKING_TOKENS
@@ -1053,11 +1059,11 @@ export class ClaudeAcpAgent implements Agent {
           : 15000;
         await query.setMaxThinkingTokens(maxThinkingTokens);
         this.logger.log(
-          `Extended thinking enabled for ${params.modelId} with ${maxThinkingTokens} tokens`,
+          `Extended thinking enabled for ${actualModelId} with ${maxThinkingTokens} tokens`,
         );
       } else {
         await query.setMaxThinkingTokens(null);
-        this.logger.log(`Extended thinking disabled for ${params.modelId}`);
+        this.logger.log(`Extended thinking disabled for ${actualModelId}`);
       }
     }
   }
@@ -1239,64 +1245,36 @@ export class ClaudeAcpAgent implements Agent {
 async function getAvailableModels(query: Query): Promise<SessionModelState> {
   const models = await query.supportedModels();
 
-  // Priority order: 1. "default" model, 2. z_ai_default_model env var, 3. First model
-  let currentModel = models[0];
+  // Hardcoded: Use Opus as default model
+  const opusModel = models.find((model) => model.value === "claude-4-opus-20250114") || models[0];
 
-  // First, try to find the special "default" model (matching claude-code-acp behavior)
-  const defaultModel = models.find((model) => model.value === "default");
-  if (defaultModel) {
-    currentModel = defaultModel;
-  } else {
-    // If no "default" model, check if z_ai_default_model is configured
-    const configuredDefaultModelId = process.env.z_ai_default_model;
-    if (configuredDefaultModelId) {
-      const foundModel = models.find((model) => model.value === configuredDefaultModelId);
-      if (foundModel) {
-        currentModel = foundModel;
-      }
-    }
-  }
+  await query.setModel(opusModel.value);
 
-  await query.setModel(currentModel.value);
+  // Enable extended thinking for Opus (15000 tokens)
+  await query.setMaxThinkingTokens(15000);
 
-  // Enable extended thinking for Opus models (15000 tokens default)
-  const isOpusModel =
-    currentModel.value.toLowerCase().includes("opus") ||
-    currentModel.value.toLowerCase().includes("glm-4.7") ||
-    currentModel.value.toLowerCase().includes("glm-4.6");
+  // Hide Opus from dropdown since it's shown as "Default (recommended)"
+  const hiddenModels: string[] = [opusModel.value];
 
-  if (isOpusModel) {
-    const maxThinkingTokens = process.env.MAX_THINKING_TOKENS
-      ? parseInt(process.env.MAX_THINKING_TOKENS, 10)
-      : 15000;
-    await query.setMaxThinkingTokens(maxThinkingTokens);
-  }
-
-  // Get hidden models list
-  let hiddenModels: string[] = [];
-  try {
-    if (process.env.z_ai_hidden_models) {
-      hiddenModels = JSON.parse(process.env.z_ai_hidden_models);
-    }
-  } catch {
-    // Ignore parse errors
-  }
-
-  // Hide current model from dropdown to avoid showing "Opus" when "Default (recommended)" is already Opus
-  hiddenModels.push(currentModel.value);
-
-  // Filter out hidden models and the currently selected model
-  const availableModels = models
-    .filter((model) => !hiddenModels.includes(model.value))
-    .map((model) => ({
-      modelId: model.value,
-      name: model.displayName,
-      description: model.description,
-    }));
+  // Add "Default (recommended)" to available models
+  const availableModels = [
+    {
+      modelId: "default",
+      name: "Default (recommended)",
+      description: opusModel.description || "Recommended model for best performance",
+    },
+    ...models
+      .filter((model) => !hiddenModels.includes(model.value))
+      .map((model) => ({
+        modelId: model.value,
+        name: model.displayName,
+        description: model.description,
+      })),
+  ];
 
   return {
     availableModels,
-    currentModelId: currentModel.value,
+    currentModelId: "default",
   };
 }
 
