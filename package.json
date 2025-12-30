@@ -1,7 +1,7 @@
 {
   "name": "z-ai-acp",
-  "version": "0.0.52",
-  "description": "An ACP-compatible coding agent powered by Claude Code SDK with Z.AI integration",
+  "version": "0.0.53",
+  "description": "An ACP-compatible coding agent powered by Claude Code SDK with z-ai integration",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -25,7 +25,7 @@
     "type": "git",
     "url": "git+https://github.com/softkr/z-ai-acp.git"
   },
-  "author": "Z.AI",
+  "author": "z-ai",
   "license": "Apache-2.0",
   "dependencies": {
     "@agentclientprotocol/sdk": "0.12.0",

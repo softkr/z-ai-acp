@@ -175,20 +175,20 @@ export function applyEnvironmentSettings(settings: ManagedSettings): void {
 
       // Set model mapping for reference
       if (zAiConfig.model_mapping) {
-        process.env.Z_AI_MODEL_MAPPING_CONFIG = JSON.stringify(zAiConfig.model_mapping);
+        process.env.z_ai_model_mapping_config = JSON.stringify(zAiConfig.model_mapping);
       }
 
       // Set default model if configured
       if (zAiConfig.default_model) {
-        process.env.Z_AI_DEFAULT_MODEL = zAiConfig.default_model;
+        process.env.z_ai_default_model = zAiConfig.default_model;
       }
 
       // Set hidden models if configured
       if (zAiConfig.hidden_models && zAiConfig.hidden_models.length > 0) {
-        process.env.Z_AI_HIDDEN_MODELS = JSON.stringify(zAiConfig.hidden_models);
+        process.env.z_ai_hidden_models = JSON.stringify(zAiConfig.hidden_models);
       }
 
-      process.env.Z_AI_ENABLED = "true";
+      process.env.z_ai_enabled = "true";
     }
   }
 
@@ -326,7 +326,7 @@ export function saveApiKey(apiKey: string): void {
       env: {
         ANTHROPIC_BASE_URL: "https://api.z.ai/api/anthropic",
         API_TIMEOUT_MS: "3000000",
-        Z_AI_MODEL_MAPPING: "true",
+        z_ai_model_mapping: "true",
       },
       z_ai: {
         enabled: true,

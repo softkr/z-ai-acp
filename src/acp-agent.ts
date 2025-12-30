@@ -1239,7 +1239,7 @@ export class ClaudeAcpAgent implements Agent {
 async function getAvailableModels(query: Query): Promise<SessionModelState> {
   const models = await query.supportedModels();
 
-  // Priority order: 1. "default" model, 2. Z_AI_DEFAULT_MODEL env var, 3. First model
+  // Priority order: 1. "default" model, 2. z_ai_default_model env var, 3. First model
   let currentModel = models[0];
 
   // First, try to find the special "default" model (matching claude-code-acp behavior)
@@ -1247,8 +1247,8 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
   if (defaultModel) {
     currentModel = defaultModel;
   } else {
-    // If no "default" model, check if Z_AI_DEFAULT_MODEL is configured
-    const configuredDefaultModelId = process.env.Z_AI_DEFAULT_MODEL;
+    // If no "default" model, check if z_ai_default_model is configured
+    const configuredDefaultModelId = process.env.z_ai_default_model;
     if (configuredDefaultModelId) {
       const foundModel = models.find((model) => model.value === configuredDefaultModelId);
       if (foundModel) {
@@ -1275,8 +1275,8 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
   // Get hidden models list
   let hiddenModels: string[] = [];
   try {
-    if (process.env.Z_AI_HIDDEN_MODELS) {
-      hiddenModels = JSON.parse(process.env.Z_AI_HIDDEN_MODELS);
+    if (process.env.z_ai_hidden_models) {
+      hiddenModels = JSON.parse(process.env.z_ai_hidden_models);
     }
   } catch {
     // Ignore parse errors

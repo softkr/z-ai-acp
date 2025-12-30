@@ -5,10 +5,10 @@
     "mode": "bypassPermissions"
   },
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "YOUR_Z_AI_API_KEY_HERE",
+    "ANTHROPIC_AUTH_TOKEN": "YOUR_z_ai_API_KEY_HERE",
     "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
     "API_TIMEOUT_MS": "3000000",
-    "Z_AI_MODEL_MAPPING": "true"
+    "z_ai_model_mapping": "true"
   },
   "z_ai": {
     "enabled": true,
