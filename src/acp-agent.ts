@@ -1043,19 +1043,13 @@ export class ClaudeAcpAgent implements Agent {
     }
     const query = this.sessions[params.sessionId].query;
     if (query) {
-      // Map "default" to actual Opus model
-      let actualModelId = params.modelId;
-      if (params.modelId === "default") {
-        actualModelId = "claude-4-opus-20250114";
-      }
-
-      await query.setModel(actualModelId);
+      await query.setModel(params.modelId);
 
       // Enable extended thinking for Opus models (15000 tokens default)
       const isOpusModel =
-        actualModelId.toLowerCase().includes("opus") ||
-        actualModelId.toLowerCase().includes("glm-4.7") ||
-        actualModelId.toLowerCase().includes("glm-4.6");
+        params.modelId.toLowerCase().includes("opus") ||
+        params.modelId.toLowerCase().includes("glm-4.7") ||
+        params.modelId.toLowerCase().includes("glm-4.6");
 
       if (isOpusModel) {
         // Get thinking configuration from settings
@@ -1065,7 +1059,7 @@ export class ClaudeAcpAgent implements Agent {
         // Check if thinking is explicitly disabled
         if (thinkingConfig.enabled === false) {
           await query.setMaxThinkingTokens(null);
-          this.logger.log(`Extended thinking disabled for ${actualModelId} (disabled in settings)`);
+          this.logger.log(`Extended thinking disabled for ${params.modelId} (disabled in settings)`);
         } else {
           // Calculate base max thinking tokens
           const baseMaxTokens = thinkingConfig.max_tokens ||
@@ -1083,7 +1077,7 @@ export class ClaudeAcpAgent implements Agent {
 
           await query.setMaxThinkingTokens(adjustedTokens);
           this.logger.log(
-            `Extended thinking enabled for ${actualModelId}: ${adjustedTokens} tokens (effort: ${effort}, base: ${baseMaxTokens})`
+            `Extended thinking enabled for ${params.modelId}: ${adjustedTokens} tokens (effort: ${effort}, base: ${baseMaxTokens})`
           );
 
           // Reset thinking metadata for new model
@@ -1094,7 +1088,7 @@ export class ClaudeAcpAgent implements Agent {
         }
       } else {
         await query.setMaxThinkingTokens(null);
-        this.logger.log(`Extended thinking disabled for ${actualModelId}`);
+        this.logger.log(`Extended thinking disabled for ${params.modelId}`);
       }
     }
   }
@@ -1284,28 +1278,18 @@ async function getAvailableModels(query: Query): Promise<SessionModelState> {
   // Enable extended thinking for Opus (15000 tokens)
   await query.setMaxThinkingTokens(15000);
 
-  // Hide Opus from dropdown since it's shown as "Default (recommended)"
-  const hiddenModels: string[] = [opusModel.value];
-
-  // Add "Default (recommended)" to available models
+  // Show only Opus model
   const availableModels = [
     {
-      modelId: "default",
-      name: "Default (recommended)",
-      description: opusModel.description || "Recommended model for best performance",
+      modelId: opusModel.value,
+      name: opusModel.displayName,
+      description: opusModel.description,
     },
-    ...models
-      .filter((model) => !hiddenModels.includes(model.value))
-      .map((model) => ({
-        modelId: model.value,
-        name: model.displayName,
-        description: model.description,
-      })),
   ];
 
   return {
     availableModels,
-    currentModelId: "default",
+    currentModelId: opusModel.value,
   };
 }
 
