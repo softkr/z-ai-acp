@@ -45,10 +45,20 @@ export interface ThinkingConfig {
   include_in_output?: boolean;
 }
 
+/**
+ * Auto mode configuration for automatic model and thinking selection
+ */
+export interface AutoModeConfig {
+  enabled?: boolean;
+  model_selection?: boolean; // Auto select model based on prompt complexity
+  thinking_adjustment?: boolean; // Auto adjust thinking effort based on complexity
+}
+
 export interface ClaudeCodeSettings {
   permissions?: PermissionSettings;
   env?: Record<string, string>;
   thinking?: ThinkingConfig;
+  auto?: AutoModeConfig;
 }
 
 export type PermissionDecision = "allow" | "deny" | "ask";
@@ -389,6 +399,16 @@ export class SettingsManager {
 
       if (settings.env) {
         merged.env = { ...merged.env, ...settings.env };
+      }
+
+      // Merge thinking config (last one wins)
+      if (settings.thinking) {
+        merged.thinking = { ...merged.thinking, ...settings.thinking };
+      }
+
+      // Merge auto config (last one wins)
+      if (settings.auto) {
+        merged.auto = { ...merged.auto, ...settings.auto };
       }
     }
 

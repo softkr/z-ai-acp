@@ -135,6 +135,11 @@ The agent stores configuration in `~/.config/z-ai-acp/managed-settings.json` wit
     "effort": "medium",
     "track_duration": true,
     "include_in_output": true
+  },
+  "auto": {
+    "enabled": true,
+    "model_selection": true,
+    "thinking_adjustment": true
   }
 }
 ```
@@ -177,6 +182,73 @@ The agent supports advanced thinking capabilities (inspired by [Crush](https://g
 ```
 
 This configuration will allocate 30,000 tokens (20,000 × 1.5) for thinking when using Opus or GLM-4.6/4.7 models.
+
+### Auto Mode Configuration
+
+The agent supports automatic model selection and thinking adjustment based on prompt complexity analysis:
+
+#### How It Works
+
+1. **Prompt Analysis**: Analyzes your prompt for complexity indicators:
+   - Prompt length and structure
+   - Code blocks and file references
+   - Task type keywords (refactoring, debugging, architecture, etc.)
+   - Language-specific keywords (English, Korean, Japanese)
+
+2. **Automatic Model Selection**: Chooses between GLM-4.7 and GLM-4.5-air:
+   - **Simple tasks** (questions, explanations) → GLM-4.5-air (faster, cost-effective)
+   - **Medium/Complex tasks** (code generation, refactoring) → GLM-4.7 (more powerful)
+
+3. **Automatic Thinking Adjustment**: Sets appropriate thinking effort:
+   - **Simple** → low effort (5,000-10,000 tokens)
+   - **Medium** → medium effort (15,000 tokens)
+   - **Complex** → high effort (20,000-30,000 tokens)
+
+#### Configuration Options
+
+- **`enabled`** (boolean): Enable/disable auto mode
+  - Default: `true`
+
+- **`model_selection`** (boolean): Auto-select model based on complexity
+  - Default: `true`
+
+- **`thinking_adjustment`** (boolean): Auto-adjust thinking effort
+  - Default: `true`
+
+#### Example Configuration
+
+```json
+{
+  "auto": {
+    "enabled": true,
+    "model_selection": true,
+    "thinking_adjustment": true
+  },
+  "thinking": {
+    "enabled": true,
+    "max_tokens": 15000
+  }
+}
+```
+
+#### Task Complexity Examples
+
+**Simple Tasks** (GLM-4.5-air, low thinking):
+- "What is this function doing?"
+- "Explain how async/await works"
+- "Show me the syntax for..."
+
+**Medium Tasks** (GLM-4.7, medium thinking):
+- "Add error handling to this function"
+- "Create a new API endpoint"
+- "Fix this bug in the code"
+
+**Complex Tasks** (GLM-4.7, high thinking):
+- "Refactor the entire authentication system"
+- "Design the architecture for..."
+- "Optimize performance across multiple files"
+
+The agent will notify you of the selected model at the start of each conversation when auto mode is enabled.
 
 ## Development
 

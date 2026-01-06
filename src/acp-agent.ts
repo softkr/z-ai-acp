@@ -68,6 +68,12 @@ import { BetaContentBlock, BetaRawContentBlockDelta } from "@anthropic-ai/sdk/re
 import packageJson from "../package.json" with { type: "json" };
 import { execSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import {
+  analyzePrompt,
+  calculateThinkingTokens,
+  getClaudeModelFromGlm,
+  type PromptAnalysis,
+} from "./prompt-analyzer.js";
 
 export const CLAUDE_CONFIG_DIR = process.env.CLAUDE ?? path.join(os.homedir(), ".claude");
 
@@ -89,6 +95,7 @@ type Session = {
   sessionParams?: NewSessionRequest; // Store params for later query creation
   thinkingStartTime?: number | null; // Timestamp when thinking started (for duration tracking)
   thinkingMetadata?: { totalDuration: number; tokenCount: number } | null; // Thinking session metadata
+  promptAnalysis?: PromptAnalysis | null; // Analyzed prompt for auto mode
 };
 
 type BackgroundTerminal =
@@ -837,7 +844,71 @@ export class ClaudeAcpAgent implements Agent {
       return { stopReason: "end_turn" };
     }
 
-    const { query, input } = session;
+    const { query, input, settingsManager } = session;
+
+    // Auto mode: Analyze prompt and adjust model/thinking if enabled
+    const settings = settingsManager.getSettings();
+    const autoConfig = settings.auto;
+
+    if (autoConfig?.enabled && !session.promptAnalysis) {
+      // Extract text from prompt for analysis
+      const promptTexts: string[] = [];
+      for (const chunk of params.prompt) {
+        if (chunk.type === "text") {
+          promptTexts.push(chunk.text);
+        } else if (chunk.type === "resource" && "text" in chunk.resource) {
+          promptTexts.push(chunk.resource.text);
+        }
+      }
+      const fullPromptText = promptTexts.join("\n");
+
+      if (fullPromptText.trim().length > 0) {
+        const analysis = analyzePrompt(fullPromptText);
+        session.promptAnalysis = analysis;
+
+        this.logger.log(`[Auto Mode] Prompt analysis: ${analysis.reasoning}`);
+        this.logger.log(
+          `[Auto Mode] Suggested: ${analysis.suggestedModel}, thinking: ${analysis.suggestedThinkingEffort} (${analysis.suggestedMaxThinkingTokens} tokens)`,
+        );
+
+        // Apply auto model selection
+        if (autoConfig.model_selection) {
+          try {
+            const claudeModel = getClaudeModelFromGlm(analysis.suggestedModel);
+            await query.setModel(claudeModel);
+            this.logger.log(`[Auto Mode] Model set to: ${claudeModel} (${analysis.suggestedModel})`);
+
+            // Notify user about model selection
+            await this.client.sessionUpdate({
+              sessionId: params.sessionId,
+              update: {
+                sessionUpdate: "agent_message_chunk",
+                content: {
+                  type: "text",
+                  text: `🤖 Auto-selected model: **${analysis.suggestedModel}** (${analysis.complexity} task)\n\n`,
+                },
+              },
+            });
+          } catch (error) {
+            this.logger.error("[Auto Mode] Failed to set model:", error);
+          }
+        }
+
+        // Apply auto thinking adjustment
+        if (autoConfig.thinking_adjustment && settings.thinking?.enabled) {
+          try {
+            const thinkingTokens = calculateThinkingTokens(
+              analysis.suggestedThinkingEffort,
+              analysis.suggestedMaxThinkingTokens,
+            );
+            await query.setMaxThinkingTokens(thinkingTokens);
+            this.logger.log(`[Auto Mode] Thinking tokens set to: ${thinkingTokens}`);
+          } catch (error) {
+            this.logger.error("[Auto Mode] Failed to set thinking tokens:", error);
+          }
+        }
+      }
+    }
 
     input.push(promptToClaude(params));
     while (true) {

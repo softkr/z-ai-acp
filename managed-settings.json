@@ -25,5 +25,10 @@
     "effort": "medium",
     "track_duration": true,
     "include_in_output": true
+  },
+  "auto": {
+    "enabled": true,
+    "model_selection": true,
+    "thinking_adjustment": true
   }
 }
