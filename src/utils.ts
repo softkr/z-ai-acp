@@ -325,7 +325,7 @@ export function saveApiKey(apiKey: string): void {
       },
       env: {
         ANTHROPIC_BASE_URL: "https://api.z.ai/api/anthropic",
-        API_TIMEOUT_MS: "3000000",
+        API_TIMEOUT_MS: "600000",
         z_ai_model_mapping: "true",
       },
       z_ai: {
