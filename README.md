@@ -2,6 +2,8 @@
 
 [![npm](https://img.shields.io/npm/v/z-ai-acp)](https://www.npmjs.com/package/z-ai-acp)
 
+**[한국어 문서 (Korean Documentation)](README.ko.md)**
+
 Use [Z.AI](https://z.ai) powered coding agent from [ACP-compatible](https://agentclientprotocol.com) clients such as [Zed](https://zed.dev)!
 
 This tool implements an ACP agent by using the official [Claude Code SDK](https://docs.anthropic.com/en/docs/claude-code/sdk/sdk-overview) with Z.AI integration, supporting:
